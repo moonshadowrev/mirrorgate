@@ -39,7 +39,7 @@ final class RequestHeaderBuilderTest extends TestCase
         self::assertSame('UA/1', $out->get('user-agent'));
         self::assertSame(['203.0.113.9'], $out->getAll('x-forwarded-for'));
         self::assertSame(['https'], $out->getAll('x-forwarded-proto'));
-        self::assertSame(['overload.ir'], $out->getAll('x-forwarded-host'));
+        self::assertSame(['ormantek.com'], $out->getAll('x-forwarded-host'));
         self::assertSame(['443'], $out->getAll('x-forwarded-port'));
         self::assertSame(['1.1 mirrorgate'], $out->getAll('via'));
         self::assertSame(['inst0123abcd'], $out->getAll('x-mirrorgate-hop'));
@@ -92,7 +92,7 @@ final class RequestHeaderBuilderTest extends TestCase
         $out = $this->build([
             ['Cookie', 'sid=1'], ['Authorization', 'Bearer x'], ['Accept', 'text/html'], ['Accept-Language', 'fa'],
             ['User-Agent', 'Evil/1'], ['Cache-Control', 'no-cache'], ['Pragma', 'no-cache'], ['Referer', 'https://x.test/'],
-            ['Origin', 'https://overload.ir'], ['X-Custom', 'y'], ['Range', 'bytes=0-1'], ['Content-Type', 'text/plain'],
+            ['Origin', 'https://ormantek.com'], ['X-Custom', 'y'], ['Range', 'bytes=0-1'], ['Content-Type', 'text/plain'],
             ['Service-Worker', 'script'],
         ], [], true, 'gzip', true, true);
         foreach (['cookie', 'authorization', 'accept-language', 'cache-control', 'pragma', 'referer', 'x-custom', 'range'] as $gone) {

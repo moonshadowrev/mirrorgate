@@ -37,7 +37,7 @@ final class UdpForwarderTest extends TestCase
         $targetPort = $this->freeUdpPort();
         $listenPort = $this->freeUdpPort();
         $config = ConfigFactory::create(
-            ['ORIGIN_URL' => 'https://overlord.team', 'MIRROR_URL' => 'https://overload.ir', 'DAEMON_ALLOW_PRIVATE_TARGETS' => 'true',
+            ['ORIGIN_URL' => 'https://overlord.team', 'MIRROR_URL' => 'https://ormantek.com', 'DAEMON_ALLOW_PRIVATE_TARGETS' => 'true',
                 'DAEMON_TARGET_ALLOWLIST' => '127.0.0.1', 'DAEMON_UDP_MAX_AMPLIFICATION' => '2'],
             '/srv',
             '/srv/.env',

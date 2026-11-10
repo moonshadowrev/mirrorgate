@@ -16,7 +16,7 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Shared factories for the rewriter tests. Defaults mirror the examples of the specification:
- * origin overlord.team, mirror overload.ir, everything on except JS/RSC/visible-text rewriting.
+ * origin overlord.team, mirror ormantek.com, everything on except JS/RSC/visible-text rewriting.
  */
 abstract class RewriteTestCase extends TestCase
 {
@@ -34,8 +34,8 @@ abstract class RewriteTestCase extends TestCase
             'subdomainMode' => 'off', 'subdomainPrefix' => '/__mg/s',
         ], $origin));
         $mirrorConfig = new MirrorConfig(...array_merge([
-            'url' => 'https://overload.ir', 'scheme' => 'https', 'host' => 'overload.ir', 'port' => 443,
-            'hostHeader' => 'overload.ir', 'isHttps' => true, 'aliases' => [], 'allowedHosts' => ['overload.ir'],
+            'url' => 'https://ormantek.com', 'scheme' => 'https', 'host' => 'ormantek.com', 'port' => 443,
+            'hostHeader' => 'ormantek.com', 'isHttps' => true, 'aliases' => [], 'allowedHosts' => ['ormantek.com'],
             'wsPublicUrl' => null,
         ], $mirror));
         $rewriteConfig = new RewriteConfig(...array_merge([

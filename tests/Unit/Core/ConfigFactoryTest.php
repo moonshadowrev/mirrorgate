@@ -11,17 +11,17 @@ use PHPUnit\Framework\TestCase;
 
 final class ConfigFactoryTest extends TestCase
 {
-    private const BASE = ['ORIGIN_URL' => 'https://overlord.team', 'MIRROR_URL' => 'https://overload.ir'];
+    private const BASE = ['ORIGIN_URL' => 'https://overlord.team', 'MIRROR_URL' => 'https://ormantek.com'];
 
     public function testDefaults(): void
     {
         $c = ConfigFactory::create(self::BASE, '/srv/app', '/srv/app/.env');
         self::assertSame('/srv/app/var', $c->app->storageDir);
         self::assertSame(443, $c->origin->port);
-        self::assertSame(['overload.ir'], $c->mirror->allowedHosts);
+        self::assertSame(['ormantek.com'], $c->mirror->allowedHosts);
         self::assertSame([200, 301, 308, 404, 410], $c->cache->statuses);
         self::assertSame(8, $c->rateLimit->globalMaxConcurrent);
-        self::assertSame(['https://overload.ir'], $c->daemon->wsOriginAllow);
+        self::assertSame(['https://ormantek.com'], $c->daemon->wsOriginAllow);
         self::assertSame(12, strlen($c->app->instanceId));
         self::assertFalse($c->admin->enabled);
     }
@@ -70,20 +70,20 @@ final class ConfigFactoryTest extends TestCase
     {
         $c = ConfigFactory::create(self::BASE + [
             'ADMIN_ENABLED' => 'true', 'ADMIN_TOKEN' => bin2hex(random_bytes(20)),
-            'HOST_MAP' => 'api.overlord.team=api.overload.ir', 'TRUSTED_PROXIES' => '10.0.0.0/8, 2001:db8::/32',
-            'MIRROR_ALIASES' => 'www.overload.ir', 'AUTH_PASSTHROUGH_BLOCK' => '/login*',
-            'CACHE_RULES' => '/api/*=-1,/static/*=3600', 'WS_PUBLIC_URL' => 'wss://ws.overload.ir:8443',
+            'HOST_MAP' => 'api.overlord.team=api.ormantek.com', 'TRUSTED_PROXIES' => '10.0.0.0/8, 2001:db8::/32',
+            'MIRROR_ALIASES' => 'www.ormantek.com', 'AUTH_PASSTHROUGH_BLOCK' => '/login*',
+            'CACHE_RULES' => '/api/*=-1,/static/*=3600', 'WS_PUBLIC_URL' => 'wss://ws.ormantek.com:8443',
         ], '/srv', '/srv/.env');
-        self::assertSame(['api.overlord.team' => 'api.overload.ir'], $c->origin->hostMap);
+        self::assertSame(['api.overlord.team' => 'api.ormantek.com'], $c->origin->hostMap);
         self::assertSame(['pattern' => '/api/*', 'ttl' => -1], $c->cache->rules[0]);
         self::assertSame(['/login*'], $c->security->blockedPaths);
-        self::assertSame('wss://ws.overload.ir:8443', $c->mirror->wsPublicUrl);
-        self::assertSame(['overload.ir', 'www.overload.ir'], $c->mirror->allowedHosts);
+        self::assertSame('wss://ws.ormantek.com:8443', $c->mirror->wsPublicUrl);
+        self::assertSame(['ormantek.com', 'www.ormantek.com'], $c->mirror->allowedHosts);
     }
 
     public function testAdminRequiresHttpsOrOptOut(): void
     {
-        $env = ['ORIGIN_URL' => 'https://overlord.team', 'MIRROR_URL' => 'http://overload.ir', 'ADMIN_ENABLED' => 'true', 'ADMIN_TOKEN' => bin2hex(random_bytes(20))];
+        $env = ['ORIGIN_URL' => 'https://overlord.team', 'MIRROR_URL' => 'http://ormantek.com', 'ADMIN_ENABLED' => 'true', 'ADMIN_TOKEN' => bin2hex(random_bytes(20))];
         try {
             ConfigFactory::create($env, '/srv', '/srv/.env');
             self::fail('expected ConfigException');

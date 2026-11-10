@@ -42,11 +42,11 @@ opcache.validate_timestamps = 1  ; set 0 only if you reload FPM after every depl
 Pool settings (a dedicated pool and Unix user per instance keeps instances separate):
 
 ```ini
-; /etc/php/8.3/fpm/pool.d/overload.conf
+; /etc/php/8.3/fpm/pool.d/ormantek.conf
 [overload]
 user = overload
 group = overload
-listen = /run/php/overload.sock
+listen = /run/php/ormantek.sock
 listen.owner = www-data
 listen.group = www-data
 pm = dynamic
@@ -62,10 +62,10 @@ php_admin_value[enable_post_data_reading] = 0
 Permissions: the project belongs to a deploy user and is only readable by the pool user, except `STORAGE_DIR`, which the pool user must be able to write.
 
 ```bash
-chown -R deploy:overload /var/www/overload.ir
-chmod -R g=rX,o= /var/www/overload.ir
-chmod 640 /var/www/overload.ir/.env
-install -d -o overload -g overload -m 750 /var/www/overload.ir/var
+chown -R deploy:overload /var/www/ormantek.com
+chmod -R g=rX,o= /var/www/ormantek.com
+chmod 640 /var/www/ormantek.com/.env
+install -d -o overload -g overload -m 750 /var/www/ormantek.com/var
 ```
 
 ## nginx
@@ -87,8 +87,8 @@ Check the configuration like this:
 
 ```bash
 nginx -t && systemctl reload nginx
-curl -sI https://overload.ir/.env | head -1          # 403 (denied dotfile)
-curl -sI https://overload.ir/ | grep -i x-mirrorgate  # X-MirrorGate-Cache: MISS or HIT
+curl -sI https://ormantek.com/.env | head -1          # 403 (denied dotfile)
+curl -sI https://ormantek.com/ | grep -i x-mirrorgate  # X-MirrorGate-Cache: MISS or HIT
 ```
 
 ### nginx behind a CDN
@@ -101,17 +101,17 @@ TLS mode: set the CDN to full (strict) TLS. A "flexible" mode that talks plain H
 
 The WebSocket daemon listens on loopback and nginx proxies to it. `WS_PUBLIC_URL` is only a scheme, host and optional port (no path); the path of each WebSocket URL in the mirrored pages is kept. Two ways to expose it:
 
-**On a separate host name (simplest).** Create a host such as `ws.overload.ir` with its own certificate and set `WS_PUBLIC_URL=wss://ws.overload.ir`.
+**On a separate host name (simplest).** Create a host such as `ws.ormantek.com` with its own certificate and set `WS_PUBLIC_URL=wss://ws.ormantek.com`.
 
 ```nginx
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
     http2 on;
-    server_name ws.overload.ir;
+    server_name ws.ormantek.com;
 
-    ssl_certificate     /etc/letsencrypt/live/ws.overload.ir/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/ws.overload.ir/privkey.pem;
+    ssl_certificate     /etc/letsencrypt/live/ws.ormantek.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/ws.ormantek.com/privkey.pem;
 
     location / {
         proxy_pass http://127.0.0.1:9001;
@@ -127,7 +127,7 @@ server {
 }
 ```
 
-**On the mirror host itself.** If the origin's WebSocket endpoint has a path that is not also an ordinary page, for example `/socket`, set `WS_PUBLIC_URL=wss://overload.ir` and add a `location ^~ /socket { ... }` block with the same `proxy_*` directives to the existing HTTPS server. This only works when `/socket` is never fetched by normal HTTP requests.
+**On the mirror host itself.** If the origin's WebSocket endpoint has a path that is not also an ordinary page, for example `/socket`, set `WS_PUBLIC_URL=wss://ormantek.com` and add a `location ^~ /socket { ... }` block with the same `proxy_*` directives to the existing HTTPS server. This only works when `/socket` is never fetched by normal HTTP requests.
 
 In both cases:
 
@@ -162,10 +162,10 @@ Enable `proxy_wstunnel` and add a virtual host for the WebSocket host name, mirr
 
 ```apache
 <VirtualHost *:443>
-    ServerName ws.overload.ir
+    ServerName ws.ormantek.com
     SSLEngine on
-    SSLCertificateFile    /etc/letsencrypt/live/ws.overload.ir/fullchain.pem
-    SSLCertificateKeyFile /etc/letsencrypt/live/ws.overload.ir/privkey.pem
+    SSLCertificateFile    /etc/letsencrypt/live/ws.ormantek.com/fullchain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/ws.ormantek.com/privkey.pem
 
     ProxyPreserveHost On
     ProxyPass        "/" "ws://127.0.0.1:9001/"
@@ -174,7 +174,7 @@ Enable `proxy_wstunnel` and add a virtual host for the WebSocket host name, mirr
 </VirtualHost>
 ```
 
-with `WS_PUBLIC_URL=wss://ws.overload.ir` and `127.0.0.1` in `TRUSTED_PROXIES`. The daemon takes the client address from the `X-Forwarded-For` header of the handshake, so confirm that your Apache build passes it on to the WebSocket backend; otherwise every client appears as `127.0.0.1` and shares the per-IP connection limit. This snippet is not exercised by the repository's tests: test it with a real WebSocket client and the daemon log.
+with `WS_PUBLIC_URL=wss://ws.ormantek.com` and `127.0.0.1` in `TRUSTED_PROXIES`. The daemon takes the client address from the `X-Forwarded-For` header of the handshake, so confirm that your Apache build passes it on to the WebSocket backend; otherwise every client appears as `127.0.0.1` and shares the per-IP connection limit. This snippet is not exercised by the repository's tests: test it with a real WebSocket client and the daemon log.
 
 ## FrankenPHP (optional)
 
@@ -197,8 +197,8 @@ A sketch of a Caddyfile for one instance (validate it with `caddy validate`; dir
     }
 }
 
-overload.ir, www.overload.ir {
-    root * /var/www/overload.ir/public
+ormantek.com, www.ormantek.com {
+    root * /var/www/ormantek.com/public
 
     @dotfiles path_regexp dot (^|/)\.(?!well-known(/|$))
     handle @dotfiles {
@@ -221,15 +221,15 @@ After starting it, verify the points that matter:
 
 ```bash
 # Dotfiles are denied.
-curl -sI https://overload.ir/.env | head -1
+curl -sI https://ormantek.com/.env | head -1
 
 # An encoded slash must reach MirrorGate and the origin unchanged,
 # not be answered with 400 or 404 by the web server.
-curl -sI 'https://overload.ir/a%2Fb?x=1' | head -1
+curl -sI 'https://ormantek.com/a%2Fb?x=1' | head -1
 
 # A form upload must arrive at the origin with its body. Then confirm through the
 # admin POST /check endpoint that ini.enable_post_data_reading is "ok".
-curl -s -o /dev/null -w '%{http_code}\n' -F f=@/etc/hostname https://overload.ir/
+curl -s -o /dev/null -w '%{http_code}\n' -F f=@/etc/hostname https://ormantek.com/
 ```
 
 If any probe fails, use nginx or Apache, which are covered by `examples/`.
@@ -239,12 +239,12 @@ If any probe fails, use nginx or Apache, which are covered by `examples/`.
 See [daemon.md](daemon.md) for listener syntax and limits. Typical VPS setup with systemd, one unit per instance:
 
 ```bash
-cp /var/www/overload.ir/examples/mirrorgate-daemon.service \
-   /etc/systemd/system/mirrorgate-daemon-overload.service
+cp /var/www/ormantek.com/examples/mirrorgate-daemon.service \
+   /etc/systemd/system/mirrorgate-daemon-ormantek.service
 # edit User, WorkingDirectory, ExecStart/ExecStop (--env=...), ReadWritePaths
 systemctl daemon-reload
-systemctl enable --now mirrorgate-daemon-overload
-journalctl -u mirrorgate-daemon-overload -f
+systemctl enable --now mirrorgate-daemon-ormantek
+journalctl -u mirrorgate-daemon-ormantek -f
 ```
 
 ## Deployment and updates
@@ -254,12 +254,12 @@ MirrorGate has no build step and no Composer runtime dependencies.
 ```bash
 # first deployment
 rsync -a --delete --exclude '/.env' --exclude '/var' --exclude '/tests' --exclude '/docs' \
-      ./ deploy@server:/var/www/overload.ir/
+      ./ deploy@server:/var/www/ormantek.com/
 
 # on the server
-php /var/www/overload.ir/bin/mirrorgate check --network
+php /var/www/ormantek.com/bin/mirrorgate check --network
 systemctl reload php8.3-fpm            # clears opcache if validate_timestamps is 0
-systemctl restart mirrorgate-daemon-overload   # only if you run the daemon
+systemctl restart mirrorgate-daemon-ormantek   # only if you run the daemon
 ```
 
 Do not delete `.env` or `var/` with `--delete`; the exclusions above protect them. A changed release or a changed rewrite configuration automatically stops older cache entries from being served (see [caching.md](caching.md#cache-keys-and-fingerprints)).
@@ -267,7 +267,7 @@ Do not delete `.env` or `var/` with `--delete`; the exclusions above protect the
 For cache garbage collection, add a cron job (this line is for a file in `/etc/cron.d/`, where the sixth field is the user; in a personal crontab omit it) or a systemd timer:
 
 ```
-*/10 * * * * overload php /var/www/overload.ir/bin/mirrorgate-gc --quiet
+*/10 * * * * overload php /var/www/ormantek.com/bin/mirrorgate-gc --quiet
 ```
 
 The tool reads the `.env` in the project root; for an environment file elsewhere, set `MIRRORGATE_ENV` in the job.

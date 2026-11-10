@@ -16,15 +16,15 @@ final class HeaderRewriterTest extends RewriteTestCase
     public static function redirects(): array
     {
         return [
-            'absolute origin' => ['https://overlord.team/x', 'https://overload.ir/x'],
+            'absolute origin' => ['https://overlord.team/x', 'https://ormantek.com/x'],
             'root relative' => ['/x', '/x'],
             'relative' => ['x/y', 'x/y'],
-            'protocol relative origin' => ['//overlord.team/x', '//overload.ir/x'],
-            'extra slashes origin' => ['///overlord.team/x', '//overload.ir/x'],
+            'protocol relative origin' => ['//overlord.team/x', '//ormantek.com/x'],
+            'extra slashes origin' => ['///overlord.team/x', '//ormantek.com/x'],
             'external passes' => ['https://evil.example/x', 'https://evil.example/x'],
             'external protocol relative' => ['//evil.example', '//evil.example'],
             'foreign port' => ['https://overlord.team:8443/x', 'https://overlord.team:8443/x'],
-            'already mirror' => ['https://overload.ir/x', 'https://overload.ir/x'],
+            'already mirror' => ['https://ormantek.com/x', 'https://ormantek.com/x'],
         ];
     }
 
@@ -62,8 +62,8 @@ final class HeaderRewriterTest extends RewriteTestCase
     public function testBlockedExternalRedirectAndContentLocationAndRefresh(): void
     {
         $block = $this->rewriter([], [], ['redirectExternal' => 'block']);
-        self::assertSame(['https://overload.ir/a'], $this->values($this->headers($block, [['Location', 'https://overlord.team/a']]), 'Location'));
-        self::assertSame(['0; url=https://overload.ir/n'], $this->values($this->headers($block, [['Refresh', '0;url=https://overlord.team/n']]), 'Refresh'));
+        self::assertSame(['https://ormantek.com/a'], $this->values($this->headers($block, [['Location', 'https://overlord.team/a']]), 'Location'));
+        self::assertSame(['0; url=https://ormantek.com/n'], $this->values($this->headers($block, [['Refresh', '0;url=https://overlord.team/n']]), 'Refresh'));
 
         foreach ([['Location', 'https://evil.example/'], ['Content-Location', 'https://evil.example/'], ['Refresh', '0; url=https://evil.example/']] as $pair) {
             try {
@@ -126,10 +126,10 @@ final class HeaderRewriterTest extends RewriteTestCase
     public function testCookieDomainRewriteAndHttpMirror(): void
     {
         $rewrite = $this->rewriter([], [], ['cookieDomainMode' => 'rewrite']);
-        self::assertSame(['a=1; Domain=overload.ir; Secure'], $this->values($this->headers($rewrite, [['Set-Cookie', 'a=1; Domain=.overlord.team']]), 'Set-Cookie'));
+        self::assertSame(['a=1; Domain=ormantek.com; Secure'], $this->values($this->headers($rewrite, [['Set-Cookie', 'a=1; Domain=.overlord.team']]), 'Set-Cookie'));
         self::assertSame(['a=1; Secure'], $this->values($this->headers($rewrite, [['Set-Cookie', 'a=1; Domain=evil.example']]), 'Set-Cookie'));
 
-        $http = $this->rewriter([], ['url' => 'http://overload.ir', 'scheme' => 'http', 'port' => 80, 'isHttps' => false]);
+        $http = $this->rewriter([], ['url' => 'http://ormantek.com', 'scheme' => 'http', 'port' => 80, 'isHttps' => false]);
         self::assertSame(
             ['a=1; HttpOnly; SameSite=Lax'],
             $this->values($this->headers($http, [['Set-Cookie', 'a=1; Secure; HttpOnly; SameSite=None']]), 'Set-Cookie'),
@@ -149,7 +149,7 @@ final class HeaderRewriterTest extends RewriteTestCase
     {
         $rewriter = $this->rewriter();
         $mapped = $this->headers($rewriter, [['Access-Control-Allow-Origin', 'https://overlord.team'], ['Access-Control-Allow-Credentials', 'true']]);
-        self::assertSame(['https://overload.ir'], $this->values($mapped, 'Access-Control-Allow-Origin'));
+        self::assertSame(['https://ormantek.com'], $this->values($mapped, 'Access-Control-Allow-Origin'));
         self::assertSame(['true'], $this->values($mapped, 'Access-Control-Allow-Credentials'));
         self::assertSame(['Origin'], $this->values($mapped, 'Vary'));
 
@@ -161,16 +161,16 @@ final class HeaderRewriterTest extends RewriteTestCase
         $evil = $this->headers($rewriter, [['Access-Control-Allow-Origin', 'https://evil.example']], false, $this->context('overlord.team', '/', 'https://evil.example'));
         self::assertSame([], $this->values($evil, 'Access-Control-Allow-Origin'));
 
-        $own = $this->headers($rewriter, [['Access-Control-Allow-Origin', 'https://overload.ir']], false, $this->context('overlord.team', '/', 'https://overload.ir'));
-        self::assertSame(['https://overload.ir'], $this->values($own, 'Access-Control-Allow-Origin'));
+        $own = $this->headers($rewriter, [['Access-Control-Allow-Origin', 'https://ormantek.com']], false, $this->context('overlord.team', '/', 'https://ormantek.com'));
+        self::assertSame(['https://ormantek.com'], $this->values($own, 'Access-Control-Allow-Origin'));
     }
 
     public function testContentSecurityPolicyModes(): void
     {
         $csp = "default-src 'self' https://overlord.team https://*.overlord.team wss://overlord.team; script-src 'self' 'sha256-abc=' 'nonce-xyz' https://cdn.example.com; "
             . "report-uri https://overlord.team/r; report-to grp; img-src data: https: overlord.team:443/img; frame-ancestors 'none'";
-        $rewritten = "default-src 'self' https://overload.ir https://*.overload.ir wss://overlord.team; script-src 'self' 'nonce-xyz' https://cdn.example.com; "
-            . "report-uri https://overload.ir/r; img-src data: https: overload.ir/img; frame-ancestors 'none'";
+        $rewritten = "default-src 'self' https://ormantek.com https://*.ormantek.com wss://overlord.team; script-src 'self' 'nonce-xyz' https://cdn.example.com; "
+            . "report-uri https://ormantek.com/r; img-src data: https: ormantek.com/img; frame-ancestors 'none'";
 
         $out = $this->headers($this->rewriter(), [['Content-Security-Policy', $csp]], true);
         self::assertSame([$rewritten], $this->values($out, 'Content-Security-Policy'));
@@ -187,7 +187,7 @@ final class HeaderRewriterTest extends RewriteTestCase
         $in = '<https://overlord.team/a.css>; rel=preload; as=style, </b,c.js>; rel=preload, <https://overlord.team/x,y>; rel="next, prev"';
         $out = $this->headers($this->rewriter(), [['Link', $in]]);
         self::assertSame(
-            ['<https://overload.ir/a.css>; rel=preload; as=style, </b,c.js>; rel=preload, <https://overload.ir/x,y>; rel="next, prev"'],
+            ['<https://ormantek.com/a.css>; rel=preload; as=style, </b,c.js>; rel=preload, <https://ormantek.com/x,y>; rel="next, prev"'],
             $this->values($out, 'Link'),
         );
     }
@@ -197,7 +197,7 @@ final class HeaderRewriterTest extends RewriteTestCase
         self::assertSame([], $this->values($this->headers($this->rewriter(), [['Strict-Transport-Security', 'max-age=1']]), 'Strict-Transport-Security'));
         $own = $this->rewriter([], [], ['hstsMode' => 'own', 'hstsValue' => 'max-age=31536000']);
         self::assertSame(['max-age=31536000'], $this->values($this->headers($own, []), 'Strict-Transport-Security'));
-        $http = $this->rewriter([], ['url' => 'http://overload.ir', 'scheme' => 'http', 'port' => 80, 'isHttps' => false], ['hstsMode' => 'own', 'hstsValue' => 'max-age=1']);
+        $http = $this->rewriter([], ['url' => 'http://ormantek.com', 'scheme' => 'http', 'port' => 80, 'isHttps' => false], ['hstsMode' => 'own', 'hstsValue' => 'max-age=1']);
         self::assertSame([], $this->values($this->headers($http, []), 'Strict-Transport-Security'));
     }
 
@@ -260,11 +260,11 @@ final class HeaderRewriterTest extends RewriteTestCase
 
     public function testCookieDomainFollowsTheRequestHost(): void
     {
-        $rewriter = $this->rewriter([], ['aliases' => ['other.example'], 'allowedHosts' => ['overload.ir', 'other.example']], ['cookieDomainMode' => 'rewrite']);
+        $rewriter = $this->rewriter([], ['aliases' => ['other.example'], 'allowedHosts' => ['ormantek.com', 'other.example']], ['cookieDomainMode' => 'rewrite']);
         $alias = new RewriteContext('/', 'overlord.team', 200, false, null, 'other.example');
         self::assertSame(['a=1; Secure'], $this->values($this->headers($rewriter, [['Set-Cookie', 'a=1; Domain=.overlord.team']], false, $alias), 'Set-Cookie'));
-        $primary = new RewriteContext('/', 'overlord.team', 200, false, null, 'www.overload.ir');
-        self::assertSame(['a=1; Domain=overload.ir; Secure'], $this->values($this->headers($rewriter, [['Set-Cookie', 'a=1; Domain=.overlord.team']], false, $primary), 'Set-Cookie'));
+        $primary = new RewriteContext('/', 'overlord.team', 200, false, null, 'www.ormantek.com');
+        self::assertSame(['a=1; Domain=ormantek.com; Secure'], $this->values($this->headers($rewriter, [['Set-Cookie', 'a=1; Domain=.overlord.team']], false, $primary), 'Set-Cookie'));
     }
 
     public function testOriginUrlsInOtherHeadersAreRewritten(): void
@@ -275,9 +275,9 @@ final class HeaderRewriterTest extends RewriteTestCase
             ['WWW-Authenticate', 'Bearer resource_metadata="https://overlord.team/.well-known/x"'],
             ['X-Plain', 'no urls here'],
         ]);
-        self::assertSame(['https://overload.ir/xmlrpc.php'], $this->values($out, 'X-Pingback'));
-        self::assertSame(['https://overload.ir/app.js.map'], $this->values($out, 'SourceMap'));
-        self::assertSame(['Bearer resource_metadata="https://overload.ir/.well-known/x"'], $this->values($out, 'WWW-Authenticate'));
+        self::assertSame(['https://ormantek.com/xmlrpc.php'], $this->values($out, 'X-Pingback'));
+        self::assertSame(['https://ormantek.com/app.js.map'], $this->values($out, 'SourceMap'));
+        self::assertSame(['Bearer resource_metadata="https://ormantek.com/.well-known/x"'], $this->values($out, 'WWW-Authenticate'));
         self::assertSame(['no urls here'], $this->values($out, 'X-Plain'));
     }
 }

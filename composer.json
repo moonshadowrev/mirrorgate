@@ -32,7 +32,7 @@
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1",
-        "phpunit/phpunit": "^13.4"
+        "phpunit/phpunit": "^12.5"
     },
     "suggest": {
         "ext-zlib": "Enables gzip decoding and recompression of responses and compressed cache bodies",

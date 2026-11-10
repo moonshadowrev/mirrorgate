@@ -44,7 +44,7 @@ The replacer finds these spellings of an origin host (case-insensitive), with or
 - `ws://` and `wss://` (see [WebSockets](#websockets)),
 - the bare host `overlord.team` for hosts mapped one-to-one (the primary host and `HOST_MAP` hosts), in places where bare hosts are replaced (below).
 
-Scheme-bearing forms take the mirror's scheme and host (for example `https://overload.ir`), keeping the escaping style of the match. Protocol-relative forms stay protocol-relative.
+Scheme-bearing forms take the mirror's scheme and host (for example `https://ormantek.com`), keeping the escaping style of the match. Protocol-relative forms stay protocol-relative.
 
 ### HTML
 
@@ -187,16 +187,16 @@ PHP cannot serve WebSockets, so `ws://` and `wss://` literals that point at the 
 
 ```bash
 # Links in the page should name the mirror, not the origin.
-curl -s https://overload.ir/ | grep -o 'overlord\.team' | head
+curl -s https://ormantek.com/ | grep -o 'overlord\.team' | head
 
 # Redirects should stay on the mirror.
-curl -sI https://overload.ir/old-path | grep -i '^location'
+curl -sI https://ormantek.com/old-path | grep -i '^location'
 
 # Cookies should be host-only and Secure.
-curl -sI https://overload.ir/ | grep -i '^set-cookie'
+curl -sI https://ormantek.com/ | grep -i '^set-cookie'
 
 # Internals must not leak.
-curl -sI https://overload.ir/ | grep -iE '^(server|x-powered-by|via|x-envoy|cf-|x-vercel)'
+curl -sI https://ormantek.com/ | grep -iE '^(server|x-powered-by|via|x-envoy|cf-|x-vercel)'
 ```
 
 The repository's end-to-end script (`bash scripts/e2e.sh`) asserts many of these behaviours against the demo origin, including links, escaped-slash JSON, `srcset`, host maps and cookies.

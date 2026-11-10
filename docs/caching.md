@@ -193,7 +193,7 @@ Use `--env=/path/to/.env` when the file is not in the project root.
 Enable the admin (`ADMIN_ENABLED=true`, a strong `ADMIN_TOKEN`, an `https` mirror; see [security.md](security.md#admin-endpoint)), then:
 
 ```bash
-curl -sS -X POST https://overload.ir/__mirrorgate/purge \
+curl -sS -X POST https://ormantek.com/__mirrorgate/purge \
   -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
   -d '{"mode":"url","target":"/about","soft":false}'
 ```
@@ -217,7 +217,7 @@ Purges act on one instance. Run the command for every instance that serves the c
 - **When it runs.** After about `CACHE_GC_PROBABILITY` percent of responses (default 1), at most every `CACHE_GC_INTERVAL` seconds (default 300), after the response has been sent. Each of these runs is bounded to about 200 milliseconds or 2000 files and continues where the previous run stopped. `php bin/mirrorgate gc` runs a pass with a 5 second budget by hand, and `bin/mirrorgate-gc` (default budget 20 seconds, `--budget-ms=N` to change) is meant for cron:
 
   ```
-  */15 * * * * MIRRORGATE_ENV=/home/user/instances/overload/.env /usr/local/bin/php /home/user/mirrorgate/bin/mirrorgate-gc --quiet
+  */15 * * * * MIRRORGATE_ENV=/home/user/instances/ormantek/.env /usr/local/bin/php /home/user/mirrorgate/bin/mirrorgate-gc --quiet
   ```
 
   Set `CACHE_GC_PROBABILITY=0` to rely on cron alone.

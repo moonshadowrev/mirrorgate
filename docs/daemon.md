@@ -23,7 +23,7 @@ Honest limits:
 - **DNS lookups block the loop.** PHP has no asynchronous resolver. Targets are resolved before the loop starts and then refreshed by a timer, at most one lookup every five seconds; a slow or failing resolver can stall all connections for the duration of that lookup. Failing hosts are backed off.
 - **Listener TLS is static and unauthenticated.** With `tls_cert` and `tls_key` the daemon terminates TLS using the files you give it. Clients are not authenticated (no client certificates).
 - **No HTTP in front.** A WebSocket client must reach the daemon directly or through a reverse proxy that passes the upgrade. Plain HTTP requests to a `ws` listener are rejected.
-- **Not for shared hosting.** Shared hosting normally forbids long-running processes and closes non-web ports. Run the daemon on a small VPS, and point a host name such as `ws.overload.ir` at it (see [WebSocket URLs](#websocket-urls)). The daemon does not need access to the PHP mirror's files, only to a `.env` with `ORIGIN_URL`, `MIRROR_URL` and the `DAEMON_*` variables.
+- **Not for shared hosting.** Shared hosting normally forbids long-running processes and closes non-web ports. Run the daemon on a small VPS, and point a host name such as `ws.ormantek.com` at it (see [WebSocket URLs](#websocket-urls)). The daemon does not need access to the PHP mirror's files, only to a `.env` with `ORIGIN_URL`, `MIRROR_URL` and the `DAEMON_*` variables.
 - **PHP memory.** A long-running PHP process can grow. The daemon checks its memory every five seconds and, above 90 percent of `DAEMON_MEMORY_LIMIT`, drains and exits with code 3 so the supervisor restarts it.
 
 ## Commands
@@ -72,7 +72,7 @@ Rules, checked at start and by `check`:
 Examples:
 
 ```ini
-# WebSocket: wss://ws.overload.ir -> (reverse proxy) -> 127.0.0.1:9001 -> wss://overlord.team
+# WebSocket: wss://ws.ormantek.com -> (reverse proxy) -> 127.0.0.1:9001 -> wss://overlord.team
 DAEMON_LISTEN_1=ws://127.0.0.1:9001->wss://overlord.team:443
 
 # Raw TCP with a TLS target
@@ -98,14 +98,14 @@ Options go after `?` and are separated by `&`. Values are URL-decoded.
 | `alpn` | with `tls_cert`, or a TLS target | Comma separated protocol names (1 to 8). gRPC listeners default to `h2` |
 | `sni` | TLS targets | Name used for SNI and certificate verification instead of the target host |
 | `host` | `ws` | `Host` header sent to the origin (a host name, optional port). Default: the target host, with the port when it is not 80 or 443 |
-| `origin_allow` | `ws` | Comma separated exact browser origins (`https://overload.ir`) accepted on this listener. Overrides `DAEMON_WS_ORIGIN_ALLOW` |
+| `origin_allow` | `ws` | Comma separated exact browser origins (`https://ormantek.com`) accepted on this listener. Overrides `DAEMON_WS_ORIGIN_ALLOW` |
 | `allow_no_origin` | `ws` | `1` to accept handshakes without an `Origin` header. Overrides `DAEMON_WS_ALLOW_NO_ORIGIN` |
 | `proxy_protocol` | `tcp`, `grpc` | `1` to expect a PROXY protocol v1 header from a trusted proxy |
 
 Example with options:
 
 ```ini
-DAEMON_LISTEN_1=ws://127.0.0.1:9001->wss://overlord.team:443?origin_allow=https://overload.ir,https://www.overload.ir&idle=300
+DAEMON_LISTEN_1=ws://127.0.0.1:9001->wss://overlord.team:443?origin_allow=https://ormantek.com,https://www.ormantek.com&idle=300
 DAEMON_LISTEN_4=grpc://0.0.0.0:8443->tls://overlord.team:443?tls_cert=/etc/ssl/mg/fullchain.pem&tls_key=/etc/ssl/mg/privkey.pem
 ```
 
@@ -156,11 +156,11 @@ For a mirrored page that opens `new WebSocket("wss://overlord.team/socket")`, th
 2. **Set `WS_PUBLIC_URL`** in the `.env` of the web instance to the scheme, host and optional port of that address, for example:
 
    ```ini
-   WS_PUBLIC_URL=wss://ws.overload.ir
+   WS_PUBLIC_URL=wss://ws.ormantek.com
    ```
 
-   No path is allowed in the value. MirrorGate then rewrites `ws(s)://overlord.team/...` literals in HTML, JSON and (with `REWRITE_JS=true`) JavaScript to `wss://ws.overload.ir/...`, keeping the path. Without `WS_PUBLIC_URL` such literals are left untouched, and the browser keeps connecting to the origin directly. That works for sockets that accept foreign origins, and does not go through the mirror.
-3. **Browser `Origin` must be accepted.** A page served from `https://overload.ir` sends `Origin: https://overload.ir`, which the default `DAEMON_WS_ORIGIN_ALLOW` covers. If you serve the page from other hosts, add them to `DAEMON_WS_ORIGIN_ALLOW`.
+   No path is allowed in the value. MirrorGate then rewrites `ws(s)://overlord.team/...` literals in HTML, JSON and (with `REWRITE_JS=true`) JavaScript to `wss://ws.ormantek.com/...`, keeping the path. Without `WS_PUBLIC_URL` such literals are left untouched, and the browser keeps connecting to the origin directly. That works for sockets that accept foreign origins, and does not go through the mirror.
+3. **Browser `Origin` must be accepted.** A page served from `https://ormantek.com` sends `Origin: https://ormantek.com`, which the default `DAEMON_WS_ORIGIN_ALLOW` covers. If you serve the page from other hosts, add them to `DAEMON_WS_ORIGIN_ALLOW`.
 
 Scripts that build WebSocket URLs at runtime from `location.host`, or from a configuration value that is not a literal host name, are not affected by rewriting. A script that uses `new WebSocket("wss://" + location.host + "/socket")` connects to the mirror host, so route that path in your reverse proxy to the daemon. If an application only has relative URLs, no rewriting is needed.
 
@@ -173,10 +173,10 @@ The WebSocket upgrade also fails on the PHP side: a normal HTTP request that car
 `examples/mirrorgate-daemon.service` is a hardened unit. Copy it per instance, then adjust the user, paths and `--env`:
 
 ```bash
-cp examples/mirrorgate-daemon.service /etc/systemd/system/mirrorgate-daemon-overload.service
+cp examples/mirrorgate-daemon.service /etc/systemd/system/mirrorgate-daemon-ormantek.service
 systemctl daemon-reload
-systemctl enable --now mirrorgate-daemon-overload
-journalctl -u mirrorgate-daemon-overload -f
+systemctl enable --now mirrorgate-daemon-ormantek
+journalctl -u mirrorgate-daemon-ormantek -f
 ```
 
 Points to know about that unit:
@@ -191,8 +191,8 @@ Points to know about that unit:
 ### supervisord
 
 ```ini
-[program:mirrorgate-daemon-overload]
-command=/usr/bin/php /opt/mirrorgate/bin/mirrorgate-daemon start --foreground --env=/opt/mirrorgate/instances/overload/.env
+[program:mirrorgate-daemon-ormantek]
+command=/usr/bin/php /opt/mirrorgate/bin/mirrorgate-daemon start --foreground --env=/opt/mirrorgate/instances/ormantek/.env
 directory=/opt/mirrorgate
 user=mirrorgate
 autostart=true
@@ -212,7 +212,7 @@ stdout_logfile=/var/log/mirrorgate/overload-daemon.out.log
 If you only have a user account on a server that allows long-running processes, a cron job can start the daemon when it is not running:
 
 ```
-* * * * * /usr/bin/php /home/user/mirrorgate/bin/mirrorgate-daemon status --env=/home/user/instances/overload/.env >/dev/null 2>&1 || nohup /usr/bin/php /home/user/mirrorgate/bin/mirrorgate-daemon start --env=/home/user/instances/overload/.env >/dev/null 2>&1 &
+* * * * * /usr/bin/php /home/user/mirrorgate/bin/mirrorgate-daemon status --env=/home/user/instances/ormantek/.env >/dev/null 2>&1 || nohup /usr/bin/php /home/user/mirrorgate/bin/mirrorgate-daemon start --env=/home/user/instances/ormantek/.env >/dev/null 2>&1 &
 ```
 
 `status` exits 0 only while the daemon runs. Without `ext-pcntl` the `start` command stays in the foreground, which `nohup ... &` handles. A screen or tmux session also works for testing. These methods have no automatic memory restart supervision beyond the cron watchdog; check the log regularly.

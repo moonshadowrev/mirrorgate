@@ -96,7 +96,7 @@ abstract class CacheTestCase extends TestCase
     {
         $target = new NormalizedTarget($path, $query);
 
-        return new Request($method, $target, new HeaderBag($headers), '127.0.0.1', 'overload.ir', true, null, false, $target->pathAndQuery());
+        return new Request($method, $target, new HeaderBag($headers), '127.0.0.1', 'ormantek.com', true, null, false, $target->pathAndQuery());
     }
 
     protected function decision(int $ttl = 60, int $swr = 30, int $sie = 3600, bool $mustRevalidate = false): CacheDecision

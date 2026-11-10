@@ -20,7 +20,7 @@
   <text class="s" x="500" y="104" text-anchor="middle">Apache / LiteSpeed, php-fpm</text>
   <text class="s" x="500" y="121" text-anchor="middle">upload-only, no shell needed</text>
   <rect class="hl" x="40" y="170" width="280" height="250" rx="14"/>
-  <text class="h" x="180" y="198" text-anchor="middle">Instance 1: overload.ir</text>
+  <text class="h" x="180" y="198" text-anchor="middle">Instance 1: ormantek.com</text>
   <text class="m" x="180" y="218" text-anchor="middle">docroot: ~/public_html/</text>
   <rect class="box" x="60" y="236" width="240" height="50" rx="10"/>
   <text class="h" x="180" y="260" text-anchor="middle">.env</text>
@@ -36,7 +36,7 @@
   <text class="m" x="180" y="504" text-anchor="middle">origin A</text>
   <path class="ln" d="M180 420V460" marker-end="url(#a)"/>
   <rect class="hl" x="360" y="170" width="280" height="250" rx="14"/>
-  <text class="h" x="500" y="198" text-anchor="middle">Instance 2: api.overload.ir</text>
+  <text class="h" x="500" y="198" text-anchor="middle">Instance 2: api.ormantek.com</text>
   <text class="m" x="500" y="218" text-anchor="middle">docroot: ~/api/</text>
   <rect class="box" x="380" y="236" width="240" height="50" rx="10"/>
   <text class="h" x="500" y="260" text-anchor="middle">.env</text>
@@ -52,7 +52,7 @@
   <text class="m" x="500" y="504" text-anchor="middle">origin A</text>
   <path class="ln" d="M500 420V460" marker-end="url(#a)"/>
   <rect class="hl" x="680" y="170" width="280" height="250" rx="14"/>
-  <text class="h" x="820" y="198" text-anchor="middle">Instance 3: blog.overload.ir</text>
+  <text class="h" x="820" y="198" text-anchor="middle">Instance 3: blog.ormantek.com</text>
   <text class="m" x="820" y="218" text-anchor="middle">docroot: ~/blog/</text>
   <rect class="box" x="700" y="236" width="240" height="50" rx="10"/>
   <text class="h" x="820" y="260" text-anchor="middle">.env</text>

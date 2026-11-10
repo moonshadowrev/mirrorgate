@@ -285,10 +285,10 @@ footer nav { display: flex; flex-wrap: wrap; gap: 6px 18px; }
 
     <div class="code" aria-label="Example configuration">
       <div class="tabs"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span>.env</span>
-        <button class="copy" type="button" data-copy="ORIGIN_URL=https://overlord.team&#10;MIRROR_URL=https://overload.ir&#10;">Copy</button></div>
+        <button class="copy" type="button" data-copy="ORIGIN_URL=https://overlord.team&#10;MIRROR_URL=https://ormantek.com&#10;">Copy</button></div>
 <pre><span class="c-c"># the only two required settings</span>
 <span class="c-k">ORIGIN_URL</span>=<span class="c-v">https://overlord.team</span>
-<span class="c-k">MIRROR_URL</span>=<span class="c-v">https://overload.ir</span>
+<span class="c-k">MIRROR_URL</span>=<span class="c-v">https://ormantek.com</span>
 
 <span class="c-c"># everything else is optional</span>
 <span class="c-k">CACHE_STALE_IF_ERROR_SECONDS</span>=<span class="c-v">604800</span>
@@ -304,8 +304,8 @@ footer nav { display: flex; flex-wrap: wrap; gap: 6px 18px; }
     <h2 lang="en">Why MirrorGate</h2>
     <h2 lang="fa">چرا MirrorGate</h2>
 
-    <p class="sub" lang="en">Your site lives on origin A (say <code>overlord.team</code>). You want the same site under a second domain B (say <code>overload.ir</code>) on a hosting plan that gives you PHP, FTP and a file manager, and nothing else. No root, no DNS control, no Nginx.</p>
-    <p class="sub" lang="fa">سایت شما روی مبدأ A (مثلاً <bdi dir="ltr">overlord.team</bdi>) اجرا می‌شود و می‌خواهید همان سایت روی دامنه‌ی دوم B (مثلاً <bdi dir="ltr">overload.ir</bdi>) هم باز شود. اما هاست شما فقط PHP، FTP و فایل‌منیجر دارد: نه دسترسی روت، نه کنترل DNS، نه Nginx.</p>
+    <p class="sub" lang="en">Your site lives on origin A (say <code>overlord.team</code>). You want the same site under a second domain B (say <code>ormantek.com</code>) on a hosting plan that gives you PHP, FTP and a file manager, and nothing else. No root, no DNS control, no Nginx.</p>
+    <p class="sub" lang="fa">سایت شما روی مبدأ A (مثلاً <bdi dir="ltr">overlord.team</bdi>) اجرا می‌شود و می‌خواهید همان سایت روی دامنه‌ی دوم B (مثلاً <bdi dir="ltr">ormantek.com</bdi>) هم باز شود. اما هاست شما فقط PHP، FTP و فایل‌منیجر دارد: نه دسترسی روت، نه کنترل DNS، نه Nginx.</p>
 
     <div class="grid c3">
       <article class="card"><div class="ic">1</div>
@@ -394,8 +394,8 @@ footer nav { display: flex; flex-wrap: wrap; gap: 6px 18px; }
 
     <ol class="steps">
       <li>
-        <h3 lang="en">Upload</h3><p lang="en">Upload the project to your account, for example <code>~/mirrors/overload.ir/</code>.</p>
-        <h3 lang="fa">آپلود</h3><p lang="fa">پروژه را روی حساب هاست آپلود کنید، مثلاً در <bdi dir="ltr"><code>~/mirrors/overload.ir/</code></bdi>.</p>
+        <h3 lang="en">Upload</h3><p lang="en">Upload the project to your account, for example <code>~/mirrors/ormantek.com/</code>.</p>
+        <h3 lang="fa">آپلود</h3><p lang="fa">پروژه را روی حساب هاست آپلود کنید، مثلاً در <bdi dir="ltr"><code>~/mirrors/ormantek.com/</code></bdi>.</p>
       </li>
       <li>
         <h3 lang="en">Point the docroot at <code>public/</code></h3><p lang="en">Set the domain's document root to the <code>public</code> folder in your control panel. If the panel cannot, use the root shim with the self-protecting <code>.env.php</code> form described in <code>.env.example</code>.</p>
@@ -407,7 +407,7 @@ footer nav { display: flex; flex-wrap: wrap; gap: 6px 18px; }
         <div class="code"><div class="tabs"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span>shell</span><button class="copy" type="button" data-copy="cp .env.example .env">Copy</button></div>
 <pre>cp .env.example .env
 <span class="c-k">ORIGIN_URL</span>=<span class="c-v">https://overlord.team</span>
-<span class="c-k">MIRROR_URL</span>=<span class="c-v">https://overload.ir</span></pre></div>
+<span class="c-k">MIRROR_URL</span>=<span class="c-v">https://ormantek.com</span></pre></div>
       </li>
       <li>
         <h3 lang="en">Check the setup</h3><p lang="en">With SSH run the command below. Without SSH, enable the admin with a random 32+ character <code>ADMIN_TOKEN</code>, call <code>/__mirrorgate/check</code> with <code>Authorization: Bearer ...</code>, then disable it again if you do not need it.</p>
@@ -416,8 +416,8 @@ footer nav { display: flex; flex-wrap: wrap; gap: 6px 18px; }
 <pre>php bin/mirrorgate check --network</pre></div>
       </li>
       <li>
-        <h3 lang="en">Point DNS and TLS, then open the mirror</h3><p lang="en">Point the mirror domain at the hosting account, issue a certificate (AutoSSL or Let's Encrypt) and visit <code>https://overload.ir/</code>.</p>
-        <h3 lang="fa">DNS و TLS را تنظیم و آینه را باز کنید</h3><p lang="fa">دامنه‌ی آینه را به حساب هاست وصل کنید، گواهی TLS بگیرید (AutoSSL یا Let's Encrypt) و <bdi dir="ltr"><code>https://overload.ir/</code></bdi> را باز کنید.</p>
+        <h3 lang="en">Point DNS and TLS, then open the mirror</h3><p lang="en">Point the mirror domain at the hosting account, issue a certificate (AutoSSL or Let's Encrypt) and visit <code>https://ormantek.com/</code>.</p>
+        <h3 lang="fa">DNS و TLS را تنظیم و آینه را باز کنید</h3><p lang="fa">دامنه‌ی آینه را به حساب هاست وصل کنید، گواهی TLS بگیرید (AutoSSL یا Let's Encrypt) و <bdi dir="ltr"><code>https://ormantek.com/</code></bdi> را باز کنید.</p>
       </li>
     </ol>
 
@@ -426,15 +426,15 @@ footer nav { display: flex; flex-wrap: wrap; gap: 6px 18px; }
     <p class="sub" lang="en">One instance serves exactly one mirror (sub)domain: its own docroot, <code>.env</code>, cache and limits. Instances never share state.</p>
     <p class="sub" lang="fa">هر نمونه دقیقاً یک (زیر)دامنه‌ی آینه را سرو می‌کند و docroot، فایل <code>.env</code>، کش و محدودیت‌های جدا دارد. نمونه‌ها هیچ وضعیتی را با هم شریک نیستند.</p>
     <div class="code"><div class="tabs"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span>layout</span></div>
-<pre><span class="c-c"># ~/mirrors/overload.ir/.env</span>
+<pre><span class="c-c"># ~/mirrors/ormantek.com/.env</span>
 <span class="c-k">ORIGIN_URL</span>=<span class="c-v">https://overlord.team</span>
-<span class="c-k">MIRROR_URL</span>=<span class="c-v">https://overload.ir</span>
-<span class="c-k">HOST_MAP</span>=<span class="c-v">api.overlord.team=api.overload.ir</span>
+<span class="c-k">MIRROR_URL</span>=<span class="c-v">https://ormantek.com</span>
+<span class="c-k">HOST_MAP</span>=<span class="c-v">api.overlord.team=api.ormantek.com</span>
 
-<span class="c-c"># ~/mirrors/api.overload.ir/.env</span>
+<span class="c-c"># ~/mirrors/api.ormantek.com/.env</span>
 <span class="c-k">ORIGIN_URL</span>=<span class="c-v">https://api.overlord.team</span>
-<span class="c-k">MIRROR_URL</span>=<span class="c-v">https://api.overload.ir</span>
-<span class="c-k">HOST_MAP</span>=<span class="c-v">overlord.team=overload.ir</span></pre></div>
+<span class="c-k">MIRROR_URL</span>=<span class="c-v">https://api.ormantek.com</span>
+<span class="c-k">HOST_MAP</span>=<span class="c-v">overlord.team=ormantek.com</span></pre></div>
     <p class="note" style="margin-top:10px" lang="en">Keep <code>HOST_MAP</code> reciprocal and choose <code>COOKIE_DOMAIN_MODE</code> deliberately. You can also keep one copy of the code and give each subdomain a small <code>index.php</code> stub that points at its own <code>.env</code>.</p>
     <p class="note" style="margin-top:10px" lang="fa">مقدار <code>HOST_MAP</code> را دوطرفه نگه دارید و <code>COOKIE_DOMAIN_MODE</code> را آگاهانه انتخاب کنید. می‌توانید فقط یک نسخه از کد داشته باشید و برای هر زیردامنه یک فایل کوچک <code>index.php</code> بگذارید که به <code>.env</code> همان نمونه اشاره کند.</p>
   </div>
@@ -454,7 +454,7 @@ footer nav { display: flex; flex-wrap: wrap; gap: 6px 18px; }
         <tbody>
           <tr><td><code>ORIGIN_URL</code></td><td><span lang="en">required</span><span lang="fa">الزامی</span></td><td><span lang="en">Remote site to mirror, <code>https://host[:port]</code></span><span lang="fa">سایت مبدأ، فقط به‌شکل <code>https://host[:port]</code></span></td></tr>
           <tr><td><code>MIRROR_URL</code></td><td><span lang="en">required</span><span lang="fa">الزامی</span></td><td><span lang="en">Public URL of this mirror; host must differ from origin</span><span lang="fa">نشانی عمومی آینه؛ میزبان آن باید با مبدأ فرق کند</span></td></tr>
-          <tr><td><code>HOST_MAP</code></td><td>-</td><td><span lang="en">Sibling mappings, <code>api.overlord.team=api.overload.ir</code></span><span lang="fa">نگاشت زیردامنه‌های هم‌خانواده</span></td></tr>
+          <tr><td><code>HOST_MAP</code></td><td>-</td><td><span lang="en">Sibling mappings, <code>api.overlord.team=api.ormantek.com</code></span><span lang="fa">نگاشت زیردامنه‌های هم‌خانواده</span></td></tr>
           <tr><td><code>STORAGE_DIR</code></td><td><code>&lt;env dir&gt;/var</code></td><td><span lang="en">Cache, logs, locks; must be outside the docroot</span><span lang="fa">کش، لاگ و قفل‌ها؛ باید بیرون از docroot باشد</span></td></tr>
           <tr><td><code>ORIGIN_CONNECT_TIMEOUT</code> / <code>ORIGIN_TIMEOUT</code></td><td>5 / 30 s</td><td><span lang="en">Connect and total timeouts</span><span lang="fa">زمان اتصال و زمان کل</span></td></tr>
           <tr><td><code>MAX_REQUEST_BODY_BYTES</code></td><td>10M</td><td><span lang="en">Largest accepted request body</span><span lang="fa">بزرگ‌ترین بدنه‌ی پذیرفته‌شده‌ی درخواست</span></td></tr>

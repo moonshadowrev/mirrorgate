@@ -24,7 +24,7 @@ A zero-dependency reverse-proxy mirror for shared hosting. Upload it, set two UR
 
 ## Why MirrorGate
 
-You run a site on origin **A** (for example `overlord.team`, a Next.js, Go or Python app). Some visitors cannot reach it reliably, or you need the same site under a second domain **B** (for example `overload.ir`) hosted on a cheap shared plan that only gives you PHP, FTP and a `.env` file.
+You run a site on origin **A** (for example `overlord.team`, a Next.js, Go or Python app). Some visitors cannot reach it reliably, or you need the same site under a second domain **B** (for example `ormantek.com`) hosted on a cheap shared plan that only gives you PHP, FTP and a `.env` file.
 
 Typical answers do not fit that hosting:
 
@@ -48,7 +48,7 @@ MirrorGate fills that gap. It is a small, auditable PHP application that behaves
 
 ```mermaid
 flowchart LR
-    V["Visitors<br/>overload.ir"] -->|HTTPS| G
+    V["Visitors<br/>ormantek.com"] -->|HTTPS| G
 
     subgraph B["Domain B: shared hosting, PHP 8.3+"]
         direction TB
@@ -95,7 +95,7 @@ The honest answer to "does it do X?" depends on where it runs. Classic shared ho
 
 You need PHP 8.3 or newer with `ext-curl`, `ext-json` and `ext-mbstring`. No Composer, no shell access required for the web app.
 
-1. **Upload.** Download a release (or clone the repository) and upload the whole project to your hosting account, for example to `~/mirrors/overload.ir/`.
+1. **Upload.** Download a release (or clone the repository) and upload the whole project to your hosting account, for example to `~/mirrors/ormantek.com/`.
 2. **Point the docroot at `public/`.** In your control panel set the domain's document root to `.../public`. If the panel does not allow that, use the root shim and the self-protecting `.env.php` form described in [`.env.example`](.env.example).
 3. **Create `.env`** one directory above `public/`:
 
@@ -105,26 +105,26 @@ You need PHP 8.3 or newer with `ext-curl`, `ext-json` and `ext-mbstring`. No Com
 
    ```dotenv
    ORIGIN_URL=https://overlord.team
-   MIRROR_URL=https://overload.ir
+   MIRROR_URL=https://ormantek.com
    ```
 
    Only these two values are required. Everything else has a safe default.
 4. **Check the setup.** With SSH run `php bin/mirrorgate check --network`. Without SSH set `ADMIN_ENABLED=true` and a random `ADMIN_TOKEN` of at least 32 characters, then call `/__mirrorgate/check` with `Authorization: Bearer <token>`, and turn the admin off again afterwards if you do not need it.
-5. **Point DNS and TLS** for the mirror domain at the hosting account (AutoSSL or Let's Encrypt), then open `https://overload.ir/`.
+5. **Point DNS and TLS** for the mirror domain at the hosting account (AutoSSL or Let's Encrypt), then open `https://ormantek.com/`.
 
 Local try-out without hosting: `php -S 127.0.0.1:8080 -t public` with a `.env` whose `MIRROR_URL` is `http://127.0.0.1:8080`. Note that the origin must stay `https` unless you set `ORIGIN_ALLOW_HTTP=true`, and a mirror host must not equal or sit under the origin host.
 
 ### Several sites on one account
 
-One instance serves exactly one mirror (sub)domain. To mirror `overlord.team` as `overload.ir` and `api.overlord.team` as `api.overload.ir`, deploy two instances, each with its own docroot, `.env` and storage directory:
+One instance serves exactly one mirror (sub)domain. To mirror `overlord.team` as `ormantek.com` and `api.overlord.team` as `api.ormantek.com`, deploy two instances, each with its own docroot, `.env` and storage directory:
 
 ```text
-~/mirrors/overload.ir/       .env  ORIGIN_URL=https://overlord.team
-                                   MIRROR_URL=https://overload.ir
-                                   HOST_MAP=api.overlord.team=api.overload.ir
-~/mirrors/api.overload.ir/   .env  ORIGIN_URL=https://api.overlord.team
-                                   MIRROR_URL=https://api.overload.ir
-                                   HOST_MAP=overlord.team=overload.ir
+~/mirrors/ormantek.com/       .env  ORIGIN_URL=https://overlord.team
+                                   MIRROR_URL=https://ormantek.com
+                                   HOST_MAP=api.overlord.team=api.ormantek.com
+~/mirrors/api.ormantek.com/   .env  ORIGIN_URL=https://api.overlord.team
+                                   MIRROR_URL=https://api.ormantek.com
+                                   HOST_MAP=overlord.team=ormantek.com
 ```
 
 Instances never share cache, locks, rate-limit or breaker state. You can run a full copy per subdomain, or keep one copy of the code and give every subdomain a three-line `index.php` stub that points at its own `.env`. Cross-host links, CORS and cookies need a reciprocal `HOST_MAP` and a deliberate `COOKIE_DOMAIN_MODE`; read [docs/multi-instance.md](docs/multi-instance.md) before you deploy siblings.
@@ -138,7 +138,7 @@ Everything is set in `.env`. A process environment variable with the same name o
 | `ORIGIN_URL` | required | Remote site to mirror, `https://host[:port]` only |
 | `MIRROR_URL` | required | Public URL of this mirror; host must differ from the origin |
 | `MIRROR_ALIASES` | empty | Extra inbound hostnames treated as this mirror |
-| `HOST_MAP` | empty | Sibling mappings such as `api.overlord.team=api.overload.ir` |
+| `HOST_MAP` | empty | Sibling mappings such as `api.overlord.team=api.ormantek.com` |
 | `STORAGE_DIR` | `<env dir>/var` | Cache, logs, locks, rate-limit state; must be outside the docroot |
 | `ORIGIN_CONNECT_TIMEOUT` / `ORIGIN_TIMEOUT` | `5` / `30` s | Connect and total origin timeouts |
 | `ORIGIN_RETRIES` | `1` | Retries for safe requests with backoff |
@@ -166,7 +166,7 @@ Everything is set in `.env`. A process environment variable with the same name o
 DAEMON_LISTEN_1=ws://127.0.0.1:9001->wss://overlord.team:443
 DAEMON_LISTEN_2=tcp://127.0.0.1:9002->tls://overlord.team:443
 DAEMON_LISTEN_3=grpc://127.0.0.1:9004->tls://overlord.team:443
-WS_PUBLIC_URL=wss://ws.overload.ir
+WS_PUBLIC_URL=wss://ws.ormantek.com
 ```
 
 ```bash

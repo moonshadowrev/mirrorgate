@@ -1,6 +1,6 @@
 # Deploying on shared hosting (cPanel and DirectAdmin)
 
-This guide installs MirrorGate on ordinary shared hosting using only a browser and the file manager or FTP. No shell access, Composer or root rights are needed ("upload-only"). The examples mirror `overlord.team` as `overload.ir`.
+This guide installs MirrorGate on ordinary shared hosting using only a browser and the file manager or FTP. No shell access, Composer or root rights are needed ("upload-only"). The examples mirror `overlord.team` as `ormantek.com`.
 
 Menu names differ between cPanel and DirectAdmin versions, themes and hosting providers. Treat the click paths below as a guide and look for the equivalent option in your panel.
 
@@ -43,11 +43,11 @@ Create a `.env` file from `.env.example`. At minimum:
 
 ```ini
 ORIGIN_URL=https://overlord.team
-MIRROR_URL=https://overload.ir
+MIRROR_URL=https://ormantek.com
 LOG_LEVEL=info
 ```
 
-Add `MIRROR_ALIASES=www.overload.ir` if the `www` host should work too, and review [configuration.md](configuration.md). Do not put the file into any folder that is served by the web server (layouts A and B) or name it `.env.php` (layout C).
+Add `MIRROR_ALIASES=www.ormantek.com` if the `www` host should work too, and review [configuration.md](configuration.md). Do not put the file into any folder that is served by the web server (layouts A and B) or name it `.env.php` (layout C).
 
 ## Step 2 (cPanel): PHP version and extensions
 
@@ -80,7 +80,7 @@ Layout B keeps the shared code and the configuration outside the web root and gi
 /home/user/
   mirrorgate/                   code, uploaded once (src/, bin/, public/, templates/ ...)
   instances/
-    overload/
+    ormantek/
       .env                      configuration of this mirror
       var/                      created automatically: cache, logs, state
   public_html/                  or the folder of the domain
@@ -89,18 +89,18 @@ Layout B keeps the shared code and the configuration outside the web root and gi
     .user.ini                   copy of mirrorgate/public/.user.ini
 ```
 
-1. Create `instances/overload/.env`.
+1. Create `instances/ormantek/.env`.
 2. In the document root of the domain create `index.php`:
 
    ```php
    <?php
-   const MIRRORGATE_ENV = '/home/user/instances/overload/.env';
+   const MIRRORGATE_ENV = '/home/user/instances/ormantek/.env';
    require '/home/user/mirrorgate/public/index.php';
    ```
 
    Use the real absolute path of your home directory (the panel shows it, usually in the sidebar of the File Manager).
 3. Copy `mirrorgate/public/.htaccess` and `mirrorgate/public/.user.ini` into the same document root. These two files carry the rewrite rules, the deny rules and the `enable_post_data_reading = 0` setting (see [PHP settings](#php-settings-that-matter)).
-4. `STORAGE_DIR` defaults to `/home/user/instances/overload/var`, next to the `.env`. Nothing writable is inside the web root.
+4. `STORAGE_DIR` defaults to `/home/user/instances/ormantek/var`, next to the `.env`. Nothing writable is inside the web root.
 
 `MIRRORGATE_ROOT` resolves to `/home/user/mirrorgate` (the directory above the `public/` folder of the required file), so templates and source are found there. This was verified with PHP's built-in server using exactly this stub.
 
@@ -118,8 +118,8 @@ Layout C puts the entire project into the document root. This is the weakest lay
    ```
 
    followed by the configuration. If the web server ever executes this file, it answers `404` and prints nothing.
-3. Set `STORAGE_DIR` to a directory **outside** the document root, for example `STORAGE_DIR=/home/user/mirrorgate-data/overload`. If `STORAGE_DIR` stays inside the document root, MirrorGate refuses to boot and logs `STORAGE_DIR:in_docroot`.
-4. Verify from the outside that these URLs do not return project content: `https://overload.ir/.env`, `/.env.php`, `/src/autoload.php`, `/composer.json`. The first three are probed by `check --network` and by the admin `/check` endpoint.
+3. Set `STORAGE_DIR` to a directory **outside** the document root, for example `STORAGE_DIR=/home/user/mirrorgate-data/ormantek`. If `STORAGE_DIR` stays inside the document root, MirrorGate refuses to boot and logs `STORAGE_DIR:in_docroot`.
+4. Verify from the outside that these URLs do not return project content: `https://ormantek.com/.env`, `/.env.php`, `/src/autoload.php`, `/composer.json`. The first three are probed by `check --network` and by the admin `/check` endpoint.
 
 On LiteSpeed without `AllowOverride`, on nginx, or when `.htaccess` is ignored for any reason, every file in the project could be downloadable. That is why `.env.php` and an external `STORAGE_DIR` are mandatory in this layout. If you can, prefer layout B.
 
@@ -168,7 +168,7 @@ With the second row other accounts on the same server may be able to read your `
 The cache cleans itself in small steps after responses (`CACHE_GC_PROBABILITY`, `CACHE_GC_INTERVAL`). On a busy mirror or a small inode quota, also add a cron job (**Cron Jobs**):
 
 ```
-*/15 * * * * MIRRORGATE_ENV=/home/user/instances/overload/.env /usr/local/bin/php /home/user/mirrorgate/bin/mirrorgate-gc --quiet
+*/15 * * * * MIRRORGATE_ENV=/home/user/instances/ormantek/.env /usr/local/bin/php /home/user/mirrorgate/bin/mirrorgate-gc --quiet
 ```
 
 Notes:
@@ -190,8 +190,8 @@ The principles are identical. Typical steps:
 
 ## Step 7: first start and verification
 
-1. Request `https://overload.ir/` in a browser. You should see the origin site with links on the mirror host.
-2. Look at the response headers (browser developer tools or `curl -I https://overload.ir/`). `X-MirrorGate-Cache: MISS` on the first request and `HIT` on the second shows that the cache works. `Via: 1.1 mirrorgate` is present unless you set `ADD_VIA=false`.
+1. Request `https://ormantek.com/` in a browser. You should see the origin site with links on the mirror host.
+2. Look at the response headers (browser developer tools or `curl -I https://ormantek.com/`). `X-MirrorGate-Cache: MISS` on the first request and `HIT` on the second shows that the cache works. `Via: 1.1 mirrorgate` is present unless you set `ADD_VIA=false`.
 3. A generic `500` page with a request ID means boot failed. Read the bootstrap log; it lists configuration problems by code. See [troubleshooting.md](troubleshooting.md#reading-the-logs).
 4. Run the self check. With shell access: `php bin/mirrorgate check --network`. Without shell access, use the admin endpoint described next.
 
@@ -209,7 +209,7 @@ The principles are identical. Typical steps:
 2. Request the check from your machine:
 
    ```bash
-   curl -sS -X POST -H "Authorization: Bearer $TOKEN" https://overload.ir/__mirrorgate/check
+   curl -sS -X POST -H "Authorization: Bearer $TOKEN" https://ormantek.com/__mirrorgate/check
    ```
 
    If your host strips the `Authorization` header (some FastCGI setups), use `-H "X-MirrorGate-Token: $TOKEN"` instead.

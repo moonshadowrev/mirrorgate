@@ -13,7 +13,7 @@ use PHPUnit\Framework\TestCase;
 
 final class RouterTest extends TestCase
 {
-    private const BASE = ['ORIGIN_URL' => 'https://overlord.team', 'MIRROR_URL' => 'https://overload.ir'];
+    private const BASE = ['ORIGIN_URL' => 'https://overlord.team', 'MIRROR_URL' => 'https://ormantek.com'];
     private const ADMIN = ['ADMIN_ENABLED' => 'true', 'ADMIN_TOKEN' => 'Zq7vK2mP9xW4nR8tL5bY3cH6jD1fG0sA'];
 
     /** @param array<string,string> $headers */
@@ -21,7 +21,7 @@ final class RouterTest extends TestCase
     {
         return Request::fromGlobals(
             ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => $path, 'REMOTE_ADDR' => '1.1.1.1'],
-            $headers + ['Host' => 'overload.ir'],
+            $headers + ['Host' => 'ormantek.com'],
         );
     }
 

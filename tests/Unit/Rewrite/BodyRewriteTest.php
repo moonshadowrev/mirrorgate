@@ -16,10 +16,10 @@ final class BodyRewriteTest extends RewriteTestCase
             . 'a{background:url( "https://overlord.team/c.png" ) , url(\'//overlord.team/d.png\'), url(/rel.png), url(data:image/png;base64,overlord.team)} '
             . 'b{background:image-set("https://overlord.team/e.png" 1x, url(https://overlord.team/f.png) 2x)} '
             . '@font-face{src:url(https://overlord.team/g.woff2)} /*# sourceMappingURL=https://overlord.team/x.map */ .c::after{content:"overlord.team"}';
-        $expected = '@import "https://overload.ir/a.css"; @import url(https://overload.ir/b.css); '
-            . 'a{background:url( "https://overload.ir/c.png" ) , url(\'//overload.ir/d.png\'), url(/rel.png), url(data:image/png;base64,overlord.team)} '
-            . 'b{background:image-set("https://overload.ir/e.png" 1x, url(https://overload.ir/f.png) 2x)} '
-            . '@font-face{src:url(https://overload.ir/g.woff2)} /*# sourceMappingURL=https://overlord.team/x.map */ .c::after{content:"overlord.team"}';
+        $expected = '@import "https://ormantek.com/a.css"; @import url(https://ormantek.com/b.css); '
+            . 'a{background:url( "https://ormantek.com/c.png" ) , url(\'//ormantek.com/d.png\'), url(/rel.png), url(data:image/png;base64,overlord.team)} '
+            . 'b{background:image-set("https://ormantek.com/e.png" 1x, url(https://ormantek.com/f.png) 2x)} '
+            . '@font-face{src:url(https://ormantek.com/g.woff2)} /*# sourceMappingURL=https://overlord.team/x.map */ .c::after{content:"overlord.team"}';
         $result = $this->rewriter()->rewriteBody($css, RewriteKind::Css, 'text/css', $this->context());
         self::assertSame($expected, $result->body);
     }
@@ -28,7 +28,7 @@ final class BodyRewriteTest extends RewriteTestCase
     {
         $json = '{"u":"https:\/\/overlord.team\/a","v":1}';
         $result = $this->rewriter()->rewriteBody($json, RewriteKind::Json, 'application/json', $this->context());
-        self::assertSame('{"u":"https:\/\/overload.ir\/a","v":1}', $result->body);
+        self::assertSame('{"u":"https:\/\/ormantek.com\/a","v":1}', $result->body);
         self::assertTrue(json_validate($result->body));
     }
 
@@ -36,7 +36,7 @@ final class BodyRewriteTest extends RewriteTestCase
     {
         $xml = '<?xml version="1.0"?><urlset><url><loc>https://overlord.team/a?x=1&amp;y=2</loc></url><url><loc><![CDATA[https://overlord.team/b]]></loc></url></urlset>';
         $result = $this->rewriter()->rewriteBody($xml, RewriteKind::Sitemap, 'application/xml', $this->context());
-        self::assertSame(str_replace('overlord.team', 'overload.ir', $xml), $result->body);
+        self::assertSame(str_replace('overlord.team', 'ormantek.com', $xml), $result->body);
 
         $keep = $this->rewriter([], [], ['seoMode' => 'canonical-origin']);
         self::assertSame($xml, $keep->rewriteBody($xml, RewriteKind::Sitemap, 'application/xml', $this->context())->body);
@@ -46,14 +46,14 @@ final class BodyRewriteTest extends RewriteTestCase
     {
         $robots = "User-agent: *\nDisallow: /overlord.team\nSitemap: https://overlord.team/sitemap.xml\nHost: overlord.team\n";
         $result = $this->rewriter()->rewriteBody($robots, RewriteKind::Robots, 'text/plain', $this->context());
-        self::assertSame("User-agent: *\nDisallow: /overlord.team\nSitemap: https://overload.ir/sitemap.xml\nHost: overload.ir\n", $result->body);
+        self::assertSame("User-agent: *\nDisallow: /overlord.team\nSitemap: https://ormantek.com/sitemap.xml\nHost: ormantek.com\n", $result->body);
     }
 
     public function testRscIsRewrittenOnlyWhenKindIsRequested(): void
     {
         $body = '1:"https://overlord.team/x"';
         $result = $this->rewriter([], [], ['rsc' => true])->rewriteBody($body, RewriteKind::Rsc, 'text/x-component', $this->context());
-        self::assertSame('1:"https://overload.ir/x"', $result->body);
+        self::assertSame('1:"https://ormantek.com/x"', $result->body);
     }
 
     public function testBinaryWideCharsetOversizedHeadAndEmptyBodiesAreSkipped(): void
@@ -82,7 +82,7 @@ final class BodyRewriteTest extends RewriteTestCase
     {
         $rewriter = $this->rewriter([], [], ['requestBody' => true]);
         $headers = $rewriter->rewriteRequestHeaders(HeaderBag::fromPairs([
-            ['Origin', 'https://overload.ir'], ['Referer', 'https://overload.ir/a?b=1'], ['X-Other', 'y'],
+            ['Origin', 'https://ormantek.com'], ['Referer', 'https://ormantek.com/a?b=1'], ['X-Other', 'y'],
         ]));
         self::assertSame('https://overlord.team', $headers->get('Origin'));
         self::assertSame('https://overlord.team/a?b=1', $headers->get('Referer'));
@@ -92,15 +92,15 @@ final class BodyRewriteTest extends RewriteTestCase
         self::assertSame('https://evil.example', $foreign->get('Origin'));
 
         self::assertSame(
-            '{"u":"https:\/\/overlord.team\/a","n":"overload.ir"}',
-            $rewriter->rewriteRequestBody('{"u":"https:\/\/overload.ir\/a","n":"overload.ir"}', 'application/json'),
+            '{"u":"https:\/\/overlord.team\/a","n":"ormantek.com"}',
+            $rewriter->rewriteRequestBody('{"u":"https:\/\/ormantek.com\/a","n":"ormantek.com"}', 'application/json'),
         );
         self::assertSame(
             'a=1&u=https%3A%2F%2Foverlord.team%2Fa&c=b',
-            $rewriter->rewriteRequestBody('a=1&u=https%3A%2F%2Foverload.ir%2Fa&c=b', 'application/x-www-form-urlencoded'),
+            $rewriter->rewriteRequestBody('a=1&u=https%3A%2F%2Formantek.com%2Fa&c=b', 'application/x-www-form-urlencoded'),
         );
         $disabled = $this->rewriter();
-        self::assertSame('{"u":"https://overload.ir"}', $disabled->rewriteRequestBody('{"u":"https://overload.ir"}', 'application/json'));
+        self::assertSame('{"u":"https://ormantek.com"}', $disabled->rewriteRequestBody('{"u":"https://ormantek.com"}', 'application/json'));
     }
 
     public function testFingerprintIsStableAndSensitive(): void
@@ -109,8 +109,8 @@ final class BodyRewriteTest extends RewriteTestCase
         self::assertSame(16, strlen($base->fingerprint()));
         self::assertSame($base->fingerprint(), $this->rewriter()->fingerprint());
         self::assertNotSame($base->fingerprint(), $this->rewriter([], [], ['seoMode' => 'noindex'])->fingerprint());
-        self::assertNotSame($base->fingerprint(), $this->rewriter(['hostMap' => ['api.overlord.team' => 'api.overload.ir']])->fingerprint());
-        self::assertNotSame($base->fingerprint(), $this->rewriter([], ['wsPublicUrl' => 'wss://ws.overload.ir'])->fingerprint());
+        self::assertNotSame($base->fingerprint(), $this->rewriter(['hostMap' => ['api.overlord.team' => 'api.ormantek.com']])->fingerprint());
+        self::assertNotSame($base->fingerprint(), $this->rewriter([], ['wsPublicUrl' => 'wss://ws.ormantek.com'])->fingerprint());
     }
 
     public function testServiceWorkerKillScriptIsStatic(): void
@@ -126,8 +126,8 @@ final class BodyRewriteTest extends RewriteTestCase
         $css = '@font-face{src:url("' . $inline . '")}a{background:url(https://overlord.team/x.png)} b{background:image-set("data:image/png;base64,' . str_repeat('B', 20000) . '" 1x, "https://overlord.team/y.png" 2x)}';
         $result = $this->rewriter()->rewriteBody($css, RewriteKind::Css, 'text/css', $this->context());
         self::assertFalse($result->skipped, (string) $result->reason);
-        self::assertStringContainsString('url(https://overload.ir/x.png)', $result->body);
-        self::assertStringContainsString('"https://overload.ir/y.png" 2x', $result->body);
+        self::assertStringContainsString('url(https://ormantek.com/x.png)', $result->body);
+        self::assertStringContainsString('"https://ormantek.com/y.png" 2x', $result->body);
 
         $html = '<style>' . $css . '</style><a href="https://overlord.team/">x</a>';
         $page = $this->rewriter()->rewriteBody($html, RewriteKind::Html, 'text/html', $this->context());

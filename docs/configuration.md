@@ -97,7 +97,7 @@ Each problem has the form `VARIABLE:reason`. Common reasons:
 |---|---|---|---|
 | `ORIGIN_URL` | required | `scheme://host[:port]` | The remote site to mirror. No path, query, fragment or credentials. `https` is required unless `ORIGIN_ALLOW_HTTP=true`. |
 | `MIRROR_URL` | required | `scheme://host[:port]` | Public URL of this mirror, same format. The host must differ from the origin host and must not be a subdomain of it. All absolute URLs that MirrorGate generates (rewritten links, cookies, `X-Forwarded-*` toward the origin) are built from this value, never from the incoming `Host` header. |
-| `MIRROR_ALIASES` | empty | list of hosts | Extra inbound host names accepted and treated as this mirror (for example `www.overload.ir`). IP literals are not allowed. Requests whose `Host` is not `MIRROR_URL`'s host or an alias get `421`. |
+| `MIRROR_ALIASES` | empty | list of hosts | Extra inbound host names accepted and treated as this mirror (for example `www.ormantek.com`). IP literals are not allowed. Requests whose `Host` is not `MIRROR_URL`'s host or an alias get `421`. |
 | `ORIGIN_ALLOW_HTTP` | `false` | boolean | Allow a plain `http://` origin. |
 | `ALLOW_PRIVATE_ORIGIN` | `false` | boolean | Disable the private, loopback and reserved address block (the SSRF guard) for the origin and `EXTRA_ORIGINS`. Link-local addresses (including the cloud metadata address `169.254.169.254`), the unspecified address and IPv6 forms that embed them stay blocked regardless. Only for tests or an origin on a private network. |
 | `ORIGIN_PORTS_ALLOW` | `80,443` | list of ports 1 to 65535 | Ports MirrorGate may connect to. The port of `ORIGIN_URL` is always added. |
@@ -342,15 +342,15 @@ These variables are read by `bin/mirrorgate-daemon`. The web application ignores
 
 ```ini
 ORIGIN_URL=https://overlord.team
-MIRROR_URL=https://overload.ir
+MIRROR_URL=https://ormantek.com
 ```
 
 ### A typical public mirror
 
 ```ini
 ORIGIN_URL=https://overlord.team
-MIRROR_URL=https://overload.ir
-MIRROR_ALIASES=www.overload.ir
+MIRROR_URL=https://ormantek.com
+MIRROR_ALIASES=www.ormantek.com
 
 LOG_LEVEL=info
 ERROR_PAGE_LANG=fa
@@ -377,7 +377,7 @@ STORAGE_DIR=/home/user/mirrorgate-data/overload
 ```
 <?php http_response_code(404); exit; ?>
 ORIGIN_URL=https://overlord.team
-MIRROR_URL=https://overload.ir
+MIRROR_URL=https://ormantek.com
 STORAGE_DIR=/home/user/mirrorgate-data/overload
 ```
 

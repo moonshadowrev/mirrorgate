@@ -1,6 +1,6 @@
 # Getting started
 
-MirrorGate is a PHP application that mirrors a remote website on your own domain. You point a domain you control (the **mirror**, for example `overload.ir`) at MirrorGate, give it the address of the site you want to mirror (the **origin**, for example `overlord.team`), and it behaves like a small CDN or reverse proxy:
+MirrorGate is a PHP application that mirrors a remote website on your own domain. You point a domain you control (the **mirror**, for example `ormantek.com`) at MirrorGate, give it the address of the site you want to mirror (the **origin**, for example `overlord.team`), and it behaves like a small CDN or reverse proxy:
 
 - It forwards every request to the origin and streams the answer back.
 - It rewrites the origin host name to the mirror host name in HTML, CSS, JSON, XML, redirects, cookies and selected headers, so links stay on the mirror.
@@ -109,7 +109,7 @@ Copy `.env.example` to `.env`. Only two variables are required:
 
 ```ini
 ORIGIN_URL=https://overlord.team
-MIRROR_URL=https://overload.ir
+MIRROR_URL=https://ormantek.com
 ```
 
 Both are `scheme://host[:port]` with no path. `MIRROR_URL` must be a different host from the origin and must not be a subdomain of it. Every other variable is optional and documented in [configuration.md](configuration.md).
@@ -121,7 +121,7 @@ Sensible additions for a public mirror:
 LOG_LEVEL=info
 
 # Also accept the www host
-MIRROR_ALIASES=www.overload.ir
+MIRROR_ALIASES=www.ormantek.com
 
 # Never forward login or OAuth endpoints through the mirror
 AUTH_PASSTHROUGH_BLOCK=/login*,/oauth/*,/api/auth/*,/signin*,/account/*
@@ -144,7 +144,7 @@ php bin/mirrorgate check --network
 
 Without shell access, enable the admin endpoint temporarily and call `POST /__mirrorgate/check` (see [security.md](security.md#admin-endpoint)).
 
-Then open `https://overload.ir/` in a browser. Fix every `FAIL` before going live and read every `WARN`.
+Then open `https://ormantek.com/` in a browser. Fix every `FAIL` before going live and read every `WARN`.
 
 ## What MirrorGate does not do
 

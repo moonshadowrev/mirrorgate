@@ -360,7 +360,7 @@ final class AdminTest extends TestCase
     public function testSelfCheckWarnsAboutAdminBehindUntrustedProxy(): void
     {
         $config = \MirrorGate\Config\ConfigFactory::create([
-            'ORIGIN_URL' => 'https://overlord.team', 'MIRROR_URL' => 'https://overload.ir',
+            'ORIGIN_URL' => 'https://overlord.team', 'MIRROR_URL' => 'https://ormantek.com',
             'ADMIN_ENABLED' => 'true', 'ADMIN_TOKEN' => self::TOKEN, 'STORAGE_DIR' => $this->dir . '/st',
         ], $this->dir, $this->dir . '/.env');
         $results = (new \MirrorGate\Console\SelfCheck($config))->run(false);

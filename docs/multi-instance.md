@@ -6,7 +6,7 @@ MirrorGate mirrors exactly one origin host onto one mirror host (plus optional a
 
 1. One instance = one mirror host = one document root = one environment file = one `STORAGE_DIR`.
 2. Instances never share cache, locks, rate-limit counters, the circuit breaker state or logs. Do not point two instances at the same `STORAGE_DIR`.
-3. Wildcard mirroring (`*.overload.ir`) is not supported. Every host you want to serve is configured explicitly, with its own `.env`.
+3. Wildcard mirroring (`*.ormantek.com`) is not supported. Every host you want to serve is configured explicitly, with its own `.env`.
 4. Instances on one account still share the account's resources: the PHP worker pool, disk quota and inode quota. `CONCURRENCY_SHARED_DIR` lets them share one origin-concurrency cap (see [Account-wide limits](#account-wide-limits)).
 5. Instances that link to each other tell each other about it with `HOST_MAP`, so cross-links, redirects, CORS headers and cookies keep working across the mirrored hosts.
 
@@ -18,13 +18,13 @@ Upload a complete release into a separate folder for each domain, set that domai
 
 ```
 /home/user/
-  overload.ir/                 release copy 1
+  ormantek.com/                 release copy 1
     .env
-    public/                    document root of overload.ir
+    public/                    document root of ormantek.com
     src/ bin/ templates/ var/
-  api.overload.ir/             release copy 2
+  api.ormantek.com/             release copy 2
     .env
-    public/                    document root of api.overload.ir
+    public/                    document root of api.ormantek.com
     src/ bin/ templates/ var/
 ```
 
@@ -41,14 +41,14 @@ Upload the code once. Give each instance a folder that holds its `.env` and runt
   mirrorgate/                          shared code, uploaded once
     src/ bin/ public/ templates/
   instances/
-    overload/    .env  var/            instance 1
+    ormantek/    .env  var/            instance 1
     api/         .env  var/            instance 2
     cdn/         .env  var/            instance 3
-  overload.ir/       (document root)
+  ormantek.com/       (document root)
     index.php  .htaccess  .user.ini
-  api.overload.ir/   (document root)
+  api.ormantek.com/   (document root)
     index.php  .htaccess  .user.ini
-  cdn.overload.ir/   (document root)
+  cdn.ormantek.com/   (document root)
     index.php  .htaccess  .user.ini
 ```
 
@@ -87,26 +87,26 @@ Do these for every instance.
 Garbage collection with several instances:
 
 ```
-*/15 * * * * MIRRORGATE_ENV=/home/user/instances/overload/.env /usr/local/bin/php /home/user/mirrorgate/bin/mirrorgate-gc --quiet
+*/15 * * * * MIRRORGATE_ENV=/home/user/instances/ormantek/.env /usr/local/bin/php /home/user/mirrorgate/bin/mirrorgate-gc --quiet
 */15 * * * * MIRRORGATE_ENV=/home/user/instances/api/.env      /usr/local/bin/php /home/user/mirrorgate/bin/mirrorgate-gc --quiet
 */15 * * * * MIRRORGATE_ENV=/home/user/instances/cdn/.env      /usr/local/bin/php /home/user/mirrorgate/bin/mirrorgate-gc --quiet
 ```
 
-## Example: `overload.ir`, `api.overload.ir` and `cdn.overload.ir`
+## Example: `ormantek.com`, `api.ormantek.com` and `cdn.ormantek.com`
 
 The origin is `overlord.team`, which has an API on `api.overlord.team` and static assets on `cdn.overlord.team`. The site's pages call the API from the browser and load assets from the CDN host. You want all three hosts to be served by the mirror.
 
-### Instance 1: the main site (`overload.ir`)
+### Instance 1: the main site (`ormantek.com`)
 
-`/home/user/instances/overload/.env`:
+`/home/user/instances/ormantek/.env`:
 
 ```ini
 ORIGIN_URL=https://overlord.team
-MIRROR_URL=https://overload.ir
-MIRROR_ALIASES=www.overload.ir
+MIRROR_URL=https://ormantek.com
+MIRROR_ALIASES=www.ormantek.com
 
 # Siblings served by the other instances
-HOST_MAP=api.overlord.team=api.overload.ir,cdn.overlord.team=cdn.overload.ir
+HOST_MAP=api.overlord.team=api.ormantek.com,cdn.overlord.team=cdn.ormantek.com
 
 # Cookies set for .overlord.team should be visible on the mirror siblings too
 COOKIE_DOMAIN_MODE=rewrite
@@ -114,17 +114,17 @@ COOKIE_DOMAIN_MODE=rewrite
 LOG_LEVEL=info
 ```
 
-### Instance 2: the API (`api.overload.ir`)
+### Instance 2: the API (`api.ormantek.com`)
 
 `/home/user/instances/api/.env`:
 
 ```ini
 ORIGIN_URL=https://api.overlord.team
-MIRROR_URL=https://api.overload.ir
+MIRROR_URL=https://api.ormantek.com
 
 # Reciprocal entry: the main site, so Access-Control-Allow-Origin from the API
-# (which names https://overlord.team) is mapped to https://overload.ir
-HOST_MAP=overlord.team=overload.ir
+# (which names https://overlord.team) is mapped to https://ormantek.com
+HOST_MAP=overlord.team=ormantek.com
 COOKIE_DOMAIN_MODE=rewrite
 
 # An API is rarely worth caching blindly
@@ -132,15 +132,15 @@ CACHE_RULES=/*=-1
 LOG_LEVEL=info
 ```
 
-### Instance 3: the CDN (`cdn.overload.ir`)
+### Instance 3: the CDN (`cdn.ormantek.com`)
 
 `/home/user/instances/cdn/.env`:
 
 ```ini
 ORIGIN_URL=https://cdn.overlord.team
-MIRROR_URL=https://cdn.overload.ir
+MIRROR_URL=https://cdn.ormantek.com
 
-HOST_MAP=overlord.team=overload.ir
+HOST_MAP=overlord.team=ormantek.com
 CACHE_MAX_BYTES=512M
 CACHE_MAX_OBJECT_BYTES=20M
 LOG_LEVEL=info
@@ -160,13 +160,13 @@ GLOBAL_MAX_CONCURRENT=8
 Run the check for each instance. With shell access:
 
 ```bash
-php /home/user/mirrorgate/bin/mirrorgate check --env=/home/user/instances/overload/.env
+php /home/user/mirrorgate/bin/mirrorgate check --env=/home/user/instances/ormantek/.env
 ```
 
 Besides the normal checks it prints one line per `HOST_MAP` entry telling you which line the sibling instance must contain, for example:
 
 ```
-[OK  ] hostmap.reciprocal: The sibling instance that mirrors api.overlord.team as api.overload.ir should list in HOST_MAP: overlord.team=overload.ir
+[OK  ] hostmap.reciprocal: The sibling instance that mirrors api.overlord.team as api.ormantek.com should list in HOST_MAP: overlord.team=ormantek.com
 ```
 
 It also warns (`hostmap.parent`) when a mapped mirror host does not share a parent domain with `MIRROR_URL`, and fails (`hostmap.collision`) when a mapping targets a host that is itself an origin host. Without shell access, `POST /__mirrorgate/check` returns the same information with a generic reciprocal-lines reminder. The check cannot read the sibling `.env` files, so it cannot tell whether they are actually consistent. You have to make them so.
@@ -177,8 +177,8 @@ It also warns (`hostmap.parent`) when a mapped mirror host does not share a pare
 
 `HOST_MAP` entries are `originhost=mirrorhost`. Every instance lists the other mirrored hosts it needs to know about:
 
-- Instance 1 (`overlord.team` as `overload.ir`) lists `api.overlord.team=api.overload.ir`. Links to the API found in its pages are rewritten to the mirror.
-- Instance 2 (`api.overlord.team` as `api.overload.ir`) lists `overlord.team=overload.ir`. When the API answers with `Access-Control-Allow-Origin: https://overlord.team`, the header is mapped to `https://overload.ir`. Without the entry the header would be dropped and the browser would block cross-origin calls from the main site to the API.
+- Instance 1 (`overlord.team` as `ormantek.com`) lists `api.overlord.team=api.ormantek.com`. Links to the API found in its pages are rewritten to the mirror.
+- Instance 2 (`api.overlord.team` as `api.ormantek.com`) lists `overlord.team=ormantek.com`. When the API answers with `Access-Control-Allow-Origin: https://overlord.team`, the header is mapped to `https://ormantek.com`. Without the entry the header would be dropped and the browser would block cross-origin calls from the main site to the API.
 
 If you forget the reverse entry, the symptoms are blocked CORS requests, redirects that leave the mirror, and absolute URLs in API responses that still name the origin.
 
@@ -190,11 +190,11 @@ This has a consequence worth knowing: in the example above, the API instance can
 
 ### Cookies
 
-By default (`COOKIE_DOMAIN_MODE=drop`) the `Domain` attribute of every origin cookie is removed, so the cookie becomes host-only on the mirror host that received it. A cookie that the origin scoped to `.overlord.team` is then **not** shared between `overload.ir` and `api.overload.ir`, and API authentication that relies on the shared cookie breaks.
+By default (`COOKIE_DOMAIN_MODE=drop`) the `Domain` attribute of every origin cookie is removed, so the cookie becomes host-only on the mirror host that received it. A cookie that the origin scoped to `.overlord.team` is then **not** shared between `ormantek.com` and `api.ormantek.com`, and API authentication that relies on the shared cookie breaks.
 
-`COOKIE_DOMAIN_MODE=rewrite` maps the origin's `Domain` to the mirror host: a cookie with `Domain=.overlord.team` becomes `Domain=overload.ir`, provided the browser would accept it for the host that is being served and the origin domain is one the instance knows (its own host, a `HOST_MAP` entry, or the parent entry from the reciprocal map). In the example this is why the API instance needs `overlord.team=overload.ir`: without that entry the cookie's `Domain=.overlord.team` cannot be mapped and the attribute is dropped.
+`COOKIE_DOMAIN_MODE=rewrite` maps the origin's `Domain` to the mirror host: a cookie with `Domain=.overlord.team` becomes `Domain=ormantek.com`, provided the browser would accept it for the host that is being served and the origin domain is one the instance knows (its own host, a `HOST_MAP` entry, or the parent entry from the reciprocal map). In the example this is why the API instance needs `overlord.team=ormantek.com`: without that entry the cookie's `Domain=.overlord.team` cannot be mapped and the attribute is dropped.
 
-The price of `rewrite` is cookie tossing: a cookie scoped to the parent mirror domain is visible to every other subdomain of `overload.ir`, including any unrelated site you host there. Only use it when all subdomains of the mirror parent domain are under your control. Cookies are always confined by `Secure`, `HttpOnly` and `SameSite` as set by the origin (`Secure` is added when the mirror is `https` and `COOKIE_FORCE_SECURE=true`).
+The price of `rewrite` is cookie tossing: a cookie scoped to the parent mirror domain is visible to every other subdomain of `ormantek.com`, including any unrelated site you host there. Only use it when all subdomains of the mirror parent domain are under your control. Cookies are always confined by `Secure`, `HttpOnly` and `SameSite` as set by the origin (`Secure` is added when the mirror is `https` and `COOKIE_FORCE_SECURE=true`).
 
 ### Prefix mode is not a substitute
 

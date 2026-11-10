@@ -132,8 +132,8 @@ final class CachePolicyTest extends CacheTestCase
         $policy = $this->policy();
         self::assertFalse($policy->isRequestEligible($this->request('/sw.js', '', [['Service-Worker', 'script']])));
         self::assertFalse($policy->isRequestEligible($this->request('/api/data', '', [['Origin', 'https://evil.example']])));
-        self::assertTrue($policy->isRequestEligible($this->request('/font.woff2', '', [['Origin', 'https://overload.ir']])));
-        self::assertTrue($policy->isRequestEligible($this->request('/font.woff2', '', [['Origin', 'http://OVERLOAD.ir:8080']])));
+        self::assertTrue($policy->isRequestEligible($this->request('/font.woff2', '', [['Origin', 'https://ormantek.com']])));
+        self::assertTrue($policy->isRequestEligible($this->request('/font.woff2', '', [['Origin', 'http://ORMANTEK.com:8080']])));
     }
 
     public function testVaryOnHeadersTheFillNeverSendsIsNotStorable(): void

@@ -16,7 +16,7 @@ final class RequestAndCompressorTest extends TestCase
     {
         $req = \MirrorGate\Http\Request::fromGlobals(
             ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/', 'REMOTE_ADDR' => '1.1.1.1'],
-            ['Host' => 'overload.ir', 'X_Forwarded_For' => '127.0.0.1', 'X_Http_Method_Override' => 'DELETE', 'Content_Length' => '5', 'X-Ok' => '1'],
+            ['Host' => 'ormantek.com', 'X_Forwarded_For' => '127.0.0.1', 'X_Http_Method_Override' => 'DELETE', 'Content_Length' => '5', 'X-Ok' => '1'],
         );
         self::assertFalse($req->headers->has('X_Forwarded_For'));
         self::assertFalse($req->headers->has('X_Http_Method_Override'));
@@ -28,7 +28,7 @@ final class RequestAndCompressorTest extends TestCase
     {
         $r = Request::fromGlobals([
             'REQUEST_METHOD' => 'post', 'REQUEST_URI' => '/x/../y?q=1', 'REMOTE_ADDR' => '1.2.3.4',
-            'HTTP_HOST' => 'Overload.ir', 'HTTP_X_FORWARDED_FOR' => '9.9.9.9', 'CONTENT_TYPE' => 'application/json',
+            'HTTP_HOST' => 'Ormantek.com', 'HTTP_X_FORWARDED_FOR' => '9.9.9.9', 'CONTENT_TYPE' => 'application/json',
             'CONTENT_LENGTH' => '12', 'HTTPS' => 'on',
         ]);
         self::assertSame('POST', $r->method);
@@ -36,7 +36,7 @@ final class RequestAndCompressorTest extends TestCase
         self::assertSame('9.9.9.9', $r->headers->get('X-Forwarded-For'));
         self::assertSame(12, $r->contentLength);
         self::assertTrue($r->viaTls);
-        self::assertSame('Overload.ir', $r->hostHeader);
+        self::assertSame('Ormantek.com', $r->hostHeader);
     }
 
     public function testRejectsHostileInput(): void

@@ -175,7 +175,7 @@ OUTBOUND_PROXY=socks5h://user:password@proxy.example.net:1080
 
 **"Too many redirects" in the browser.**
 - The mirror sits behind a CDN with a "flexible" TLS mode (the CDN talks plain HTTP to your server) while your server redirects to HTTPS. Use full (strict) TLS between CDN and server, or stop redirecting at the server.
-- `MIRROR_URL` uses a different scheme or host than the one visitors use. If visitors come through `https://www.overload.ir/`, add `www.overload.ir` to `MIRROR_ALIASES`. If `MIRROR_URL` says `http://` while the site is served over HTTPS, absolute links are rewritten to `http://` and browsers flag mixed content.
+- `MIRROR_URL` uses a different scheme or host than the one visitors use. If visitors come through `https://www.ormantek.com/`, add `www.ormantek.com` to `MIRROR_ALIASES`. If `MIRROR_URL` says `http://` while the site is served over HTTPS, absolute links are rewritten to `http://` and browsers flag mixed content.
 - The origin redirects `overlord.team` to `www.overlord.team` (or the reverse). `www.overlord.team` is not a mapped host, so the redirect target is a different, unmapped host and the visitor leaves the mirror. Set `ORIGIN_URL` to the canonical origin host (the one it redirects to) so that redirects stay inside the mapping.
 - The origin redirects to HTTPS on the mirror host name because it received an unexpected `X-Forwarded-Proto`. MirrorGate sends `X-Forwarded-Proto`, `X-Forwarded-Host` and `X-Forwarded-Port` describing the **mirror**. Frameworks configured to trust them will generate mirror URLs; that is intended.
 
@@ -219,7 +219,7 @@ Symptom: Server-Sent Events arrive in bursts or only when the connection closes.
 1. Enable the admin endpoint temporarily and run:
 
    ```bash
-   curl -N -H "Authorization: Bearer $TOKEN" https://overload.ir/__mirrorgate/streamtest
+   curl -N -H "Authorization: Bearer $TOKEN" https://ormantek.com/__mirrorgate/streamtest
    ```
 
    You should see five lines `chunk 1 t=0` to `chunk 5 t=2000` arrive about half a second apart. If they all arrive together, something between PHP and the browser buffers the output. If they are spaced out, the layers are fine and the problem is with the origin or the page.
@@ -277,16 +277,16 @@ You can test request bodies against your own setup with `curl` and a mirror whos
 
 ```bash
 # Multipart upload
-curl -s -F 'file=@/etc/hostname' https://overload.ir/echo | head
+curl -s -F 'file=@/etc/hostname' https://ormantek.com/echo | head
 
 # Form post
-curl -s -d 'a=1&b=2' https://overload.ir/echo | head
+curl -s -d 'a=1&b=2' https://ormantek.com/echo | head
 
 # Chunked upload
-curl -s -H 'Transfer-Encoding: chunked' -d 'hello' https://overload.ir/echo | head
+curl -s -H 'Transfer-Encoding: chunked' -d 'hello' https://ormantek.com/echo | head
 
 # Oversize upload (expect 413)
-head -c 20000000 /dev/zero | curl -s -o /dev/null -w '%{http_code}\n' --data-binary @- https://overload.ir/echo
+head -c 20000000 /dev/zero | curl -s -o /dev/null -w '%{http_code}\n' --data-binary @- https://ormantek.com/echo
 ```
 
 Each should reach the origin with the right body, or answer `413` for the last. Behaviour depends on the web server: Apache, nginx and LiteSpeed normally de-chunk request bodies before PHP, so MirrorGate re-sends the body with its own `Content-Length` and never uses `Transfer-Encoding: chunked` toward the origin. If `post_max_size` is smaller than `MAX_REQUEST_BODY_BYTES`, uploads between the two limits are rejected with `413` or `BODY:post_max_size`.

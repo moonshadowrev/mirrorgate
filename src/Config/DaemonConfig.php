@@ -21,7 +21,7 @@ final readonly class DaemonConfig
         public int $udpMaxDatagram,
         public int $udpRatePerSec,
         public int $wsMaxLifetime,
-        /** @var list<string> */ public array $wsOriginAllow,      // origins, e.g. "https://overload.ir"
+        /** @var list<string> */ public array $wsOriginAllow,      // origins, e.g. "https://ormantek.com"
         /** @var list<string> */ public array $targetAllowlist,    // hosts
         public bool $allowPrivateTargets,
         public int $targetDnsTtl,

@@ -294,7 +294,7 @@ final class HttpCacheTest extends CacheTestCase
     {
         $target = \MirrorGate\Http\PathNormalizer::normalize($rawTarget);
 
-        return new \MirrorGate\Http\Request('GET', $target, new HeaderBag([]), '127.0.0.1', 'overload.ir', true, null, false, $target->pathAndQuery());
+        return new \MirrorGate\Http\Request('GET', $target, new HeaderBag([]), '127.0.0.1', 'ormantek.com', true, null, false, $target->pathAndQuery());
     }
 
     public function testPurgeUsesTheSameCanonicalFormAsLookup(): void

@@ -232,7 +232,7 @@ final class PipeTest extends TestCase
         [$origin, $originPort] = $this->listen();
         $listenPort = $this->freePort();
         $config = \MirrorGate\Config\ConfigFactory::create(
-            ['ORIGIN_URL' => 'https://overlord.team', 'MIRROR_URL' => 'https://overload.ir', 'DAEMON_ALLOW_PRIVATE_TARGETS' => 'true',
+            ['ORIGIN_URL' => 'https://overlord.team', 'MIRROR_URL' => 'https://ormantek.com', 'DAEMON_ALLOW_PRIVATE_TARGETS' => 'true',
                 'DAEMON_TARGET_ALLOWLIST' => '127.0.0.1'],
             '/srv',
             '/srv/.env',

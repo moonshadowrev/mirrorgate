@@ -18,7 +18,7 @@
   <rect class="box" x="30" y="70" width="150" height="70" rx="10"/>
   <text class="h" x="105" y="94" text-anchor="middle">Request</text>
   <text class="s" x="105" y="114" text-anchor="middle">GET /page</text>
-  <text class="s" x="105" y="131" text-anchor="middle">Host: overload.ir</text>
+  <text class="s" x="105" y="131" text-anchor="middle">Host: ormantek.com</text>
   <rect class="box" x="220" y="70" width="170" height="70" rx="10"/>
   <text class="h" x="305" y="94" text-anchor="middle">1. Guard</text>
   <text class="s" x="305" y="114" text-anchor="middle">host allowlist, size,</text>
