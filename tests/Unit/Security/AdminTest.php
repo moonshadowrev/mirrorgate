@@ -377,8 +377,15 @@ final class AdminTest extends TestCase
         $bad = new FileRateLimiter($this->dir . '/blocker/ratelimit', $this->clock);
         self::assertFalse($bad->probe());
         // Traffic limiting stays available (fails open) but the failure is no longer silent.
-        $result = $bad->hit('k', 1, 60);
+        $logFile = $this->dir . '/error.log';
+        $previousLog = ini_set('error_log', $logFile);
+        try {
+            $result = $bad->hit('k', 1, 60);
+        } finally {
+            ini_set('error_log', $previousLog === false ? '' : $previousLog);
+        }
         self::assertTrue($result->allowed);
+        self::assertStringContainsString('rate-limit storage is not usable', (string) file_get_contents($logFile));
     }
 
     public function testAtomicWriteCreatesOwnerOnlyTemporaryFiles(): void
