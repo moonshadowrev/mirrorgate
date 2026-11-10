@@ -1,0 +1,106 @@
+{
+    "name": "moonshadowrev/mirrorgate",
+    "description": "Configuration-only PHP reverse-proxy mirror for shared hosting: mirrors a remote origin on your own domain with host rewriting, caching, stale-if-error and optional WebSocket/gRPC/TCP/UDP daemon.",
+    "type": "project",
+    "license": "Apache-2.0",
+    "keywords": [
+        "reverse-proxy",
+        "mirror",
+        "proxy",
+        "cache",
+        "shared-hosting",
+        "sse",
+        "websocket"
+    ],
+    "homepage": "https://github.com/moonshadowrev/mirrorgate",
+    "support": {
+        "issues": "https://github.com/moonshadowrev/mirrorgate/issues",
+        "source": "https://github.com/moonshadowrev/mirrorgate",
+        "security": "https://github.com/moonshadowrev/mirrorgate/security/policy"
+    },
+    "authors": [
+        {
+            "name": "moonshadowrev",
+            "homepage": "https://github.com/moonshadowrev"
+        }
+    ],
+    "require": {
+        "php": ">=8.3",
+        "ext-curl": "*",
+        "ext-json": "*",
+        "ext-mbstring": "*"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^11.5"
+    },
+    "suggest": {
+        "ext-zlib": "Enables gzip decoding and recompression of responses and compressed cache bodies",
+        "ext-apcu": "Faster rate limiting and concurrency counters than the file based driver",
+        "ext-pcntl": "Signal handling (graceful stop) for bin/mirrorgate-daemon",
+        "ext-posix": "Process checks for bin/mirrorgate-daemon",
+        "ext-intl": "Native IDNA conversion for internationalized domain names (a pure PHP fallback is built in)",
+        "ext-brotli": "Brotli decoding of origin responses"
+    },
+    "autoload": {
+        "psr-4": {
+            "MirrorGate\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "MirrorGate\\Tests\\": "tests/"
+        }
+    },
+    "bin": [
+        "bin/mirrorgate"
+    ],
+    "scripts": {
+        "test": "phpunit",
+        "test:standalone": "@php tests/run.php",
+        "e2e": "bash scripts/e2e.sh",
+        "daemon-selftest": "@php tools/daemon-selftest.php",
+        "stan": "phpstan analyse --memory-limit=1G",
+        "lint": [
+            "find src public bin tools -name '*.php' -print0 | xargs -0 -n1 php -l",
+            "for f in bin/*; do php -l \"$f\" || exit 1; done",
+            "php tests/Lint/check-cli-guards.php"
+        ],
+        "check": [
+            "@lint",
+            "@stan",
+            "@test"
+        ]
+    },
+    "scripts-descriptions": {
+        "test": "Run the PHPUnit test suites",
+        "test:standalone": "Run the same unit tests with the dependency-free runner (no vendor/ needed)",
+        "e2e": "Start demo origin plus mirror on local ports and assert behaviour with curl",
+        "daemon-selftest": "Unit and end-to-end checks of the TCP/UDP/WebSocket/gRPC daemon",
+        "stan": "Run PHPStan (level 8) over the application code",
+        "lint": "Syntax check every PHP file and verify the CLI-only guards of the entry scripts",
+        "check": "Run lint, static analysis and tests"
+    },
+    "archive": {
+        "exclude": [
+            "/tests",
+            "/docs",
+            "/.github",
+            "/.phpunit.cache",
+            "/.env",
+            "/.env.*",
+            "!/.env.example",
+            "/var",
+            "/vendor",
+            "/phpunit.xml.dist",
+            "/phpstan.neon.dist"
+        ]
+    },
+    "config": {
+        "sort-packages": true,
+        "optimize-autoloader": true,
+        "process-timeout": 0
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

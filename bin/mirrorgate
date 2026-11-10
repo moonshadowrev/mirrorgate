@@ -1,0 +1,183 @@
+#!/usr/bin/env php
+<?php
+// SPDX-License-Identifier: Apache-2.0
+
+declare(strict_types=1);
+
+if (PHP_SAPI !== 'cli') {
+    http_response_code(404);
+    exit;
+}
+
+use MirrorGate\Bootstrap;
+use MirrorGate\Config\Config;
+use MirrorGate\Config\ConfigException;
+use MirrorGate\Console\CheckLevel;
+use MirrorGate\Version;
+
+$root = dirname(__DIR__);
+require $root . '/src/autoload.php';
+
+error_reporting(E_ALL);
+ini_set('display_errors', '1');
+
+/**
+ * @param list<string> $argv
+ * @return array{command:string,options:array<string,string|bool>}
+ */
+function mg_parse_args(array $argv): array
+{
+    array_shift($argv);
+    $command = '';
+    $options = [];
+    foreach ($argv as $arg) {
+        if (str_starts_with($arg, '--')) {
+            $body = substr($arg, 2);
+            $eq = strpos($body, '=');
+            if ($eq === false) {
+                $options[$body] = true;
+            } else {
+                $options[substr($body, 0, $eq)] = substr($body, $eq + 1);
+            }
+        } elseif ($command === '') {
+            $command = $arg;
+        }
+    }
+    return ['command' => $command, 'options' => $options];
+}
+
+function mg_usage(): string
+{
+    return <<<'TXT'
+    MirrorGate command line tool
+
+    Usage:
+      mirrorgate check [--network] [--env=/path/to/.env]
+      mirrorgate purge --url=/path | --prefix=/path | --all [--soft]
+      mirrorgate gc
+      mirrorgate config:dump
+      mirrorgate version
+
+    TXT;
+}
+
+/**
+ * @return array<string,mixed>
+ */
+function mg_dump(object $obj): array
+{
+    $out = [];
+    foreach (get_object_vars($obj) as $name => $value) {
+        $out[$name] = mg_dump_value($name, $value);
+    }
+    return $out;
+}
+
+function mg_dump_value(string $name, mixed $value): mixed
+{
+    if (is_object($value)) {
+        return mg_dump($value);
+    }
+    if (is_int($value) && in_array($name, ['storageFileMode', 'storageDirMode'], true)) {
+        return sprintf('%04o', $value);
+    }
+    if (in_array($name, ['token', 'salt'], true)) {
+        return ($value === '' || $value === null) ? '' : '***';
+    }
+    if ($name === 'outboundProxy' && is_string($value) && $value !== '') {
+        $parts = parse_url($value);
+        if (is_array($parts) && (isset($parts['user']) || isset($parts['pass']))) {
+            return preg_replace('#//[^@/]*@#', '//***:***@', $value) ?? '***';
+        }
+        return $value;
+    }
+    return $value;
+}
+
+$parsed = mg_parse_args($argv);
+$command = $parsed['command'];
+$options = $parsed['options'];
+
+if ($command === '' || isset($options['help']) || $command === 'help') {
+    fwrite(STDOUT, mg_usage());
+    exit($command === '' ? 1 : 0);
+}
+
+if ($command === 'version') {
+    fwrite(STDOUT, 'MirrorGate ' . Version::VERSION . "\n");
+    exit(0);
+}
+
+$envFile = isset($options['env']) && is_string($options['env']) ? $options['env'] : null;
+try {
+    $config = Bootstrap::loadConfig($root, $envFile);
+} catch (ConfigException $e) {
+    fwrite(STDERR, "Configuration is invalid:\n");
+    foreach ($e->getErrors() as $line) {
+        fwrite(STDERR, '  - ' . $line . "\n");
+    }
+    exit(2);
+}
+date_default_timezone_set($config->app->timezone);
+$container = Bootstrap::container($config);
+
+switch ($command) {
+    case 'check':
+        $results = $container->selfCheck()->run(isset($options['network']));
+        $exit = 0;
+        foreach ($results as $r) {
+            $tag = match ($r->level) {
+                CheckLevel::Ok => 'OK  ',
+                CheckLevel::Warn => 'WARN',
+                CheckLevel::Fail => 'FAIL',
+            };
+            if ($r->level === CheckLevel::Fail) {
+                $exit = 1;
+            }
+            fwrite(STDOUT, sprintf("[%s] %s: %s\n", $tag, $r->name, $r->message));
+        }
+        exit($exit);
+
+    case 'purge':
+        $cache = $container->httpCache();
+        $soft = isset($options['soft']);
+        if (isset($options['all'])) {
+            $n = $cache->purgeAll($soft);
+        } elseif (isset($options['url']) && is_string($options['url'])) {
+            if (!str_starts_with($options['url'], '/')) {
+                fwrite(STDERR, "--url must start with /\n");
+                exit(2);
+            }
+            $n = $cache->purgeUrl($options['url'], $soft);
+        } elseif (isset($options['prefix']) && is_string($options['prefix'])) {
+            if (!str_starts_with($options['prefix'], '/')) {
+                fwrite(STDERR, "--prefix must start with /\n");
+                exit(2);
+            }
+            $n = $cache->purgePrefix($options['prefix'], $soft);
+        } else {
+            fwrite(STDERR, "purge needs --url=, --prefix= or --all\n");
+            exit(2);
+        }
+        fwrite(STDOUT, sprintf("%s %d cache entr%s\n", $soft ? 'Soft-purged' : 'Purged', $n, $n === 1 ? 'y' : 'ies'));
+        exit(0);
+
+    case 'gc':
+        $report = $container->httpCache()->gc(5000);
+        fwrite(STDOUT, sprintf(
+            "Scanned %d, deleted %d, freed %d bytes in %.2f s\n",
+            $report->scanned,
+            $report->deleted,
+            $report->freedBytes,
+            $report->seconds,
+        ));
+        exit(0);
+
+    case 'config:dump':
+        fwrite(STDOUT, json_encode(mg_dump($config), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR) . "\n");
+        exit(0);
+
+    default:
+        fwrite(STDERR, "Unknown command.\n\n" . mg_usage());
+        exit(1);
+}

@@ -1,0 +1,70 @@
+name: Bug report
+description: Report something that is not working as documented
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. If this is a security vulnerability, do not file it here; use the private security advisory link on the issue chooser.
+        Never paste secrets, `.env` contents, cookies, or tokens. Redact hostnames if they are private.
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the bug and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Minimal steps, including the request made and the relevant (redacted) `.env` keys.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: MirrorGate version
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: php
+    attributes:
+      label: PHP version and SAPI
+      placeholder: "8.3.36, php-fpm"
+    validations:
+      required: true
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - HTTP proxy
+        - Rewriting (HTML/CSS/JS/JSON/XML/headers/cookies)
+        - Cache
+        - Error pages
+        - SSE streaming
+        - Daemon (WebSocket / gRPC / TCP / UDP)
+        - Configuration / .env
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: hosting
+    attributes:
+      label: Hosting environment
+      options:
+        - Shared hosting (Apache / LiteSpeed)
+        - Shared hosting (Nginx)
+        - VPS / dedicated
+        - Docker
+        - Local development (php -S)
+        - Other
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs or output
+      description: Redact secrets and private hostnames.
+      render: text

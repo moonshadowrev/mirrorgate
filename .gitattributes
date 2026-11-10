@@ -1,0 +1,29 @@
+# Normalize line endings; shell scripts and PHP entry points must keep LF.
+* text=auto eol=lf
+
+*.php text eol=lf diff=php
+bin/* text eol=lf
+*.sh text eol=lf
+.htaccess text eol=lf
+*.pem text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.zip binary
+*.gz binary
+
+# Keep development-only files out of release archives (git archive, GitHub zips).
+/tests/ export-ignore
+/docs/ export-ignore
+/.github/ export-ignore
+/.editorconfig export-ignore
+/.gitattributes export-ignore
+/.gitignore export-ignore
+/phpunit.xml.dist export-ignore
+/phpstan.neon.dist export-ignore

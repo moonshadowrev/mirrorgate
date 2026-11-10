@@ -1,0 +1,125 @@
+# MirrorGate: root shim rules for hosts whose document root cannot be moved to public/.
+#
+# In this layout the whole project (src/, bin/, var/, templates/, .env, ...) sits inside the
+# web root. These rules make Apache / LiteSpeed route every request to the index.php shim,
+# and refuse to serve project files directly: a request for a file that exists on disk and is
+# sensitive (dotfiles, *.php other than the shim, *.md, *.log, composer.*, ...) answers 403,
+# any other path (including /docs/page or /src/anything that is not a file) is handed to
+# MirrorGate and answered by the mirrored origin. Real project files such as
+# /LICENSE are never served: they are routed to MirrorGate or denied.
+#
+# Exceptions: the index.php shim itself, and real non-PHP files under /.well-known/ (ACME /
+# AutoSSL validation, security.txt).
+#
+# Do not rely on this file alone. nginx, LiteSpeed without AllowOverride and Apache with
+# "AllowOverride None" ignore .htaccess, and then every file below is downloadable:
+#   1. Use the self-protecting `.env.php` form instead of `.env` (see .env.example).
+#   2. Set STORAGE_DIR to a directory OUTSIDE the web root (MirrorGate refuses to boot
+#      otherwise, unless ALLOW_SECRETS_IN_DOCROOT=true).
+#   3. Verify from the outside: https://your-mirror/.env, /.env.php, /src/autoload.php and
+#      /composer.json must not return project content (`bin/mirrorgate check --network` or
+#      the admin /check endpoint probes the first three).
+#   4. Prefer a host or plan that lets you point the docroot at public/.
+#
+# On IIS the same rules ship in web.config. For nginx see examples/nginx.conf.
+
+Options -Indexes -MultiViews
+DirectoryIndex index.php
+
+# --- Deny rules (Apache 2.4 and 2.2) -----------------------------------------------------
+
+# Dotfiles: .env, .env.php, .env.example, .git*, .user.ini, .htaccess, ...
+<FilesMatch "^\.">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Logs, documentation, tool configuration, key material, backups. (.txt, .json and .xml are
+# deliberately not listed: certificate authorities and apps place such files in .well-known/.)
+<FilesMatch "(?i)(~|\.(log|md|markdown|lock|neon|dist|pem|sha256|sql|bak|backup|old|orig|save|swp|swo|tmp|ini|env))$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# composer.json, composer.lock, composer.phar, phpunit.xml.dist, phpstan.neon.dist, LICENSE,
+# NOTICE and the CLI entry scripts have no or unusual extensions.
+<FilesMatch "^(composer\..*|phpunit\.xml.*|phpstan\.neon.*|LICENSE|NOTICE|mirrorgate(-gc|-daemon)?)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Every PHP-like file except the root index.php shim.
+<FilesMatch "(?i)^(?!index\.php$).+\.(php[0-9]*|phtml|phar|phps|inc|pht)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# --- Routing -----------------------------------------------------------------------------
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Hand the Authorization header to PHP (FastCGI and CGI strip it by default).
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Dotfile paths are never forwarded to the origin: answer 403 locally.
+    # /.well-known/ is the only dot segment that is allowed.
+    RewriteRule (^|/)\.(?!well-known(/|$)) - [F,L]
+
+    # The front controller shim.
+    RewriteRule ^index\.php$ - [L]
+
+    # Real, non-PHP files under .well-known/ are served by the web server.
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^\.well-known/(?!.*\.(?:php[0-9]*|phtml|phar|phps|inc|pht)(?:/|$)).+$ - [L,NC]
+
+    # Everything else, including paths that exist on disk (src/, bin/, var/, docs/, ...),
+    # is handled by MirrorGate.
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# Fallback when mod_rewrite is not available: hide the project directories outright.
+# (mod_alias; this only applies when the mirror is served from the domain root.)
+<IfModule !mod_rewrite.c>
+    <IfModule mod_alias.c>
+        RedirectMatch 404 ^/(?:src|bin|var|templates|tests|docs|vendor|resources|tools|examples|public|\.github)(?:/|$)
+    </IfModule>
+</IfModule>
+
+# --- PHP settings ------------------------------------------------------------------------
+
+# php://input must carry raw form and multipart bodies. mod_php: set here; PHP-FPM / CGI read
+# the .user.ini next to the shim.
+<IfModule mod_php.c>
+    php_value enable_post_data_reading 0
+</IfModule>
+<IfModule mod_php8.c>
+    php_value enable_post_data_reading 0
+</IfModule>
+
+# --- Streaming ---------------------------------------------------------------------------
+
+# Do not let mod_deflate buffer Server-Sent Events.
+<IfModule mod_setenvif.c>
+    SetEnvIfNoCase Accept "text/event-stream" no-gzip=1 dont-vary=1
+</IfModule>

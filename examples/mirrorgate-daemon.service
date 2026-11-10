@@ -1,0 +1,69 @@
+# MirrorGate daemon: systemd unit example.
+#
+# Install (as root), adjusting the paths and the user to your layout:
+#   cp mirrorgate-daemon.service /etc/systemd/system/mirrorgate-daemon-app.service
+#   systemctl daemon-reload
+#   systemctl enable --now mirrorgate-daemon-app
+#   journalctl -u mirrorgate-daemon-app -f
+#
+# One unit per MirrorGate instance (each instance has its own .env and DAEMON_LISTEN_n ports).
+# Name the copies after the instance, for example mirrorgate-daemon-app.service and
+# mirrorgate-daemon-api.service, and give every instance a different pid file via DAEMON_PID_FILE.
+#
+# Exit code 3 means the daemon restarted itself because it neared DAEMON_MEMORY_LIMIT;
+# Restart=always brings it back immediately. Exit code 1 means a configuration error: fix it
+# instead of restarting forever (RestartPreventExitStatus=1 handles that).
+
+[Unit]
+Description=MirrorGate daemon (WebSocket, gRPC, TCP and UDP forwarding) for the app instance
+Documentation=https://github.com/moonshadowrev/mirrorgate
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mirrorgate
+Group=mirrorgate
+WorkingDirectory=/opt/mirrorgate
+
+# --foreground keeps the process attached to systemd and mirrors the log to the journal.
+ExecStart=/usr/bin/php /opt/mirrorgate/bin/mirrorgate-daemon start --foreground --env=/opt/mirrorgate/instances/app/.env
+ExecStop=/usr/bin/php /opt/mirrorgate/bin/mirrorgate-daemon stop --env=/opt/mirrorgate/instances/app/.env
+
+# SIGTERM starts a graceful drain (up to 10 seconds); give it a little longer before SIGKILL.
+KillSignal=SIGTERM
+TimeoutStopSec=20
+
+Restart=always
+RestartSec=2
+RestartPreventExitStatus=1
+StartLimitIntervalSec=60
+StartLimitBurst=10
+
+# select() can only watch descriptors below 1024, so more than this is never useful.
+LimitNOFILE=4096
+
+# Hardening. The daemon needs the network, its storage directory and read access to the code.
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/mirrorgate/instances/app/var
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=false
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+SystemCallArchitectures=native
+UMask=0027
+
+# Ports below 1024 need this; remove it when you bind high ports behind a reverse proxy.
+#AmbientCapabilities=CAP_NET_BIND_SERVICE
+#CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target

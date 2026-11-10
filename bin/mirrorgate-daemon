@@ -1,0 +1,187 @@
+#!/usr/bin/env php
+<?php
+// SPDX-License-Identifier: Apache-2.0
+declare(strict_types=1);
+
+if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
+
+/*
+ * MirrorGate daemon: WebSocket, gRPC (h2c / TLS passthrough), TCP and UDP forwarding.
+ *
+ * Usage: mirrorgate-daemon start|stop|status|check [--env=PATH] [--foreground]
+ *
+ * Exit codes: 0 clean stop, 1 startup or configuration failure, 2 fatal runtime error, 3 memory restart
+ * (a supervisor should restart the process on 3).
+ */
+
+use MirrorGate\Bootstrap;
+use MirrorGate\Config\ConfigException;
+use MirrorGate\Daemon\Daemon;
+use MirrorGate\Daemon\TeeLogger;
+use MirrorGate\Log\FileLogger;
+use MirrorGate\Support\FileUtil;
+
+$root = dirname(__DIR__);
+require $root . '/src/autoload.php';
+
+function mg_daemon_usage(): void
+{
+    fwrite(STDOUT, "MirrorGate daemon\n\n"
+        . "Usage: mirrorgate-daemon <command> [options]\n\n"
+        . "Commands:\n"
+        . "  start     start the daemon (forks into the background when ext-pcntl exists, unless --foreground)\n"
+        . "  stop      ask the running daemon to stop (stop file, plus SIGTERM when ext-posix exists)\n"
+        . "  status    show whether the daemon is running\n"
+        . "  check     validate the listeners and print capability warnings\n\n"
+        . "Options:\n"
+        . "  --env=PATH     use this env file instead of the default lookup\n"
+        . "  --foreground   do not fork; log to standard error as well (for systemd, supervisord, Docker)\n"
+        . "  --help         show this text\n");
+}
+
+$command = $argv[1] ?? 'help';
+$envFile = null;
+$foreground = false;
+foreach (array_slice($argv, 2) as $arg) {
+    if (str_starts_with($arg, '--env=')) {
+        $envFile = substr($arg, 6);
+    } elseif ($arg === '--foreground' || $arg === '-f') {
+        $foreground = true;
+    } elseif ($arg === '--help' || $arg === '-h') {
+        $command = 'help';
+    } else {
+        fwrite(STDERR, "unknown option\n");
+        exit(1);
+    }
+}
+if ($command === 'help' || $command === '--help' || $command === '-h') {
+    mg_daemon_usage();
+    exit(0);
+}
+if (!in_array($command, ['start', 'stop', 'status', 'check'], true)) {
+    fwrite(STDERR, "unknown command\n");
+    mg_daemon_usage();
+    exit(1);
+}
+if ($envFile !== null && !is_file($envFile)) {
+    fwrite(STDERR, "env file not found\n");
+    exit(1);
+}
+
+error_reporting(E_ALL);
+if (function_exists('ini_set')) {
+    @ini_set('display_errors', 'stderr');
+}
+
+try {
+    $config = Bootstrap::loadConfig($root, $envFile);
+} catch (ConfigException $e) {
+    fwrite(STDERR, "configuration invalid:\n");
+    foreach ($e->getErrors() as $error) {
+        fwrite(STDERR, '  ' . $error . "\n");
+    }
+    exit(1);
+} catch (Throwable $e) {
+    fwrite(STDERR, "cannot load the configuration\n");
+    exit(1);
+}
+$dc = $config->daemon;
+
+if ($config->app->timezone !== '') {
+    @date_default_timezone_set($config->app->timezone);
+}
+
+foreach ([$dc->logFile, $dc->pidFile, $dc->stopFile] as $path) {
+    try {
+        FileUtil::ensureDir(dirname($path));
+    } catch (Throwable $e) {
+        fwrite(STDERR, "cannot create the directory for " . basename($path) . "\n");
+        exit(1);
+    }
+}
+
+if ($command === 'status') {
+    $st = Daemon::status($dc);
+    fwrite(STDOUT, $st['running'] ? 'running' . ($st['pid'] !== null ? ' (pid ' . $st['pid'] . ')' : '') . "\n" : "not running\n");
+    exit($st['running'] ? 0 : 3);
+}
+
+if ($command === 'stop') {
+    $r = Daemon::signalStop($dc);
+    fwrite($r['ok'] ? STDOUT : STDERR, $r['message'] . "\n");
+    if (!$r['ok']) {
+        exit(1);
+    }
+    $deadline = microtime(true) + Daemon::DRAIN_SECONDS + 5;
+    while (microtime(true) < $deadline) {
+        if (!Daemon::status($dc)['running']) {
+            fwrite(STDOUT, "stopped\n");
+            exit(0);
+        }
+        usleep(200000);
+    }
+    fwrite(STDERR, "daemon is still running after the drain period\n");
+    exit(1);
+}
+
+$fileLogger = new FileLogger($dc->logFile, $config->app->logLevel, $config->app->logMaxBytes);
+
+if ($command === 'check') {
+    $daemon = new Daemon($config, $fileLogger);
+    $failed = false;
+    foreach ($daemon->check() as [$level, $message]) {
+        $label = ['ok' => 'OK  ', 'warn' => 'WARN', 'fail' => 'FAIL'][$level] ?? '    ';
+        fwrite($level === 'fail' ? STDERR : STDOUT, $label . ' ' . $message . "\n");
+        $failed = $failed || $level === 'fail';
+    }
+    exit($failed ? 1 : 0);
+}
+
+// start
+if (Daemon::status($dc)['running']) {
+    fwrite(STDERR, "daemon is already running\n");
+    exit(1);
+}
+
+if (!$foreground) {
+    if (function_exists('pcntl_fork') && function_exists('posix_setsid')) {
+        $pid = pcntl_fork();
+        if ($pid < 0) {
+            fwrite(STDERR, "fork failed\n");
+            exit(1);
+        }
+        if ($pid > 0) {
+            // Parent: wait for the child to take the pid file lock, then report.
+            $deadline = microtime(true) + 6.0;
+            while (microtime(true) < $deadline) {
+                $st = Daemon::status($dc);
+                if ($st['running']) {
+                    fwrite(STDOUT, 'started' . ($st['pid'] !== null ? ' (pid ' . $st['pid'] . ')' : '') . "\n");
+                    exit(0);
+                }
+                $status = 0;
+                if (pcntl_waitpid($pid, $status, WNOHANG) === $pid) {
+                    fwrite(STDERR, "daemon exited during startup; see " . basename($dc->logFile) . "\n");
+                    exit(1);
+                }
+                usleep(100000);
+            }
+            fwrite(STDERR, "daemon did not report ready; see " . basename($dc->logFile) . "\n");
+            exit(1);
+        }
+        posix_setsid();
+        fclose(STDIN);
+        fclose(STDOUT);
+        fclose(STDERR);
+        $in = fopen('/dev/null', 'rb');
+        $out = fopen('/dev/null', 'wb');
+        $err = fopen('/dev/null', 'wb');
+    } else {
+        fwrite(STDERR, "ext-pcntl is missing: running in the foreground. Use nohup, screen, supervisord or systemd to keep it alive.\n");
+        $foreground = true;
+    }
+}
+
+$logger = new TeeLogger($fileLogger, $foreground, $config->app->logLevel);
+$daemon = new Daemon($config, $logger);
+exit($daemon->run());

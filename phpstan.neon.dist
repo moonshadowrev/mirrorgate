@@ -1,0 +1,12 @@
+parameters:
+    level: 8
+    paths:
+        - src
+        - public
+        - bin/mirrorgate
+        - bin/mirrorgate-gc
+        - bin/mirrorgate-daemon
+    treatPhpDocTypesAsCertain: false
+    reportUnmatchedIgnoredErrors: true
+    checkUninitializedProperties: true
+    tmpDir: .phpstan.cache

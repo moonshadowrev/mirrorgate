@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="MirrorGate logo">
+  <title>MirrorGate</title>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2dd4bf"/>
+      <stop offset="1" stop-color="#6366f1"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="#0b1220"/>
+  <path d="M14 50V26a18 18 0 0 1 36 0v24" fill="none" stroke="url(#g)" stroke-width="5" stroke-linecap="round"/>
+  <path d="M32 14v36" stroke="url(#g)" stroke-width="3" stroke-dasharray="2 5" stroke-linecap="round"/>
+  <circle cx="23" cy="36" r="3.5" fill="#2dd4bf"/>
+  <circle cx="41" cy="36" r="3.5" fill="#6366f1"/>
+</svg>

@@ -1,0 +1,687 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MirrorGate: mirror any site with PHP and one .env</title>
+<meta name="description" content="MirrorGate is a zero-dependency PHP reverse-proxy mirror for shared hosting. Configure two URLs in .env and your domain serves a cached, rewritten copy of a remote origin.">
+<meta name="color-scheme" content="light dark">
+<meta property="og:title" content="MirrorGate">
+<meta property="og:description" content="Mirror any website on your own domain with one PHP app and one .env file.">
+<meta property="og:type" content="website">
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<style>
+:root {
+  --bg: #f7f8fb;
+  --surface: #ffffff;
+  --surface-2: #eef1f6;
+  --text: #0f172a;
+  --muted: #475569;
+  --line: #d9dfe9;
+  --accent: #0f766e;
+  --accent-2: #4f46e5;
+  --accent-ink: #ffffff;
+  --code-bg: #0b1220;
+  --code-text: #dbe4f3;
+  --ok: #0f766e;
+  --no: #b42318;
+  --maybe: #a15c07;
+  --shadow: 0 1px 2px rgba(15, 23, 42, .06), 0 8px 24px rgba(15, 23, 42, .06);
+  --radius: 14px;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --font-fa: "Vazirmatn", Tahoma, "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #080d18;
+    --surface: #0f1626;
+    --surface-2: #151e33;
+    --text: #e6ecf7;
+    --muted: #9fb0c8;
+    --line: #22304c;
+    --accent: #2dd4bf;
+    --accent-2: #818cf8;
+    --accent-ink: #04201c;
+    --code-bg: #060a13;
+    --ok: #2dd4bf;
+    --no: #f87171;
+    --maybe: #fbbf24;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .35);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #080d18;
+  --surface: #0f1626;
+  --surface-2: #151e33;
+  --text: #e6ecf7;
+  --muted: #9fb0c8;
+  --line: #22304c;
+  --accent: #2dd4bf;
+  --accent-2: #818cf8;
+  --accent-ink: #04201c;
+  --code-bg: #060a13;
+  --ok: #2dd4bf;
+  --no: #f87171;
+  --maybe: #fbbf24;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .35);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 72px; -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.65;
+}
+html[lang="fa"] body { font-family: var(--font-fa); font-size: 17px; line-height: 1.95; letter-spacing: 0; }
+html[lang="fa"] h1, html[lang="fa"] h2, html[lang="fa"] h3 { line-height: 1.5; letter-spacing: 0; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; } }
+
+a { color: var(--accent); text-underline-offset: 3px; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 3px solid var(--accent-2); outline-offset: 2px; border-radius: 6px; }
+img { max-width: 100%; height: auto; display: block; }
+code, pre, kbd { font-family: var(--mono); direction: ltr; unicode-bidi: isolate; }
+:not(pre) > code {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: .08em .4em;
+  font-size: .88em;
+  overflow-wrap: anywhere;
+}
+.wrap { max-width: 1080px; margin-inline: auto; padding-inline: 16px; }
+.skip { position: absolute; inset-inline-start: 8px; top: -60px; background: var(--accent); color: var(--accent-ink); padding: 8px 14px; border-radius: 8px; z-index: 100; }
+.skip:focus { top: 8px; }
+
+/* language blocks */
+html[lang="en"] [lang="fa"]:not(html) { display: none !important; }
+html[lang="fa"] [lang="en"]:not(html) { display: none !important; }
+
+/* header */
+header.top {
+  position: sticky; top: 0; z-index: 50;
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
+  backdrop-filter: saturate(1.4) blur(10px);
+  -webkit-backdrop-filter: saturate(1.4) blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+.bar { display: flex; align-items: center; gap: 14px; min-height: 58px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 800; color: var(--text); text-decoration: none; font-size: 1.05rem; }
+.brand img { width: 30px; height: 30px; }
+nav.links { display: none; gap: 2px; margin-inline-start: 12px; flex-wrap: wrap; }
+nav.links a { color: var(--muted); text-decoration: none; padding: 6px 10px; border-radius: 8px; font-size: .92rem; }
+nav.links a:hover { background: var(--surface-2); color: var(--text); }
+.spacer { flex: 1; }
+.btn {
+  appearance: none; cursor: pointer; font: inherit; font-size: .9rem; font-weight: 600;
+  display: inline-flex; align-items: center; gap: 8px; justify-content: center;
+  padding: 8px 14px; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--text); text-decoration: none; min-height: 40px;
+}
+.btn:hover { background: var(--surface-2); }
+.btn.primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: var(--accent-ink); border-color: transparent; }
+.btn.primary:hover { filter: brightness(1.06); background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
+@media (min-width: 940px) { nav.links { display: flex; } }
+
+/* hero */
+.hero { padding: 64px 0 40px; position: relative; overflow: hidden; }
+.hero::before {
+  content: ""; position: absolute; inset: -20% -10% auto -10%; height: 420px; z-index: -1;
+  background: radial-gradient(60% 80% at 30% 0%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 70%),
+              radial-gradient(50% 70% at 80% 10%, color-mix(in srgb, var(--accent-2) 20%, transparent), transparent 70%);
+}
+.eyebrow { display: inline-flex; gap: 8px; align-items: center; font-size: .82rem; font-weight: 700; color: var(--accent); border: 1px solid var(--line); background: var(--surface); padding: 4px 12px; border-radius: 99px; }
+h1 { font-size: clamp(2.1rem, 6vw, 3.6rem); line-height: 1.08; margin: 18px 0 14px; letter-spacing: -.025em; max-width: 18ch; }
+h1 .grad { background: linear-gradient(120deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lead { font-size: clamp(1.05rem, 2.4vw, 1.25rem); color: var(--muted); max-width: 62ch; margin: 0 0 26px; }
+.cta { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 26px; }
+.badges { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 30px; padding: 0; list-style: none; }
+.badges img { height: 20px; }
+.hero-grid { display: grid; gap: 28px; }
+@media (min-width: 900px) { .hero-grid { grid-template-columns: 1.1fr .9fr; align-items: center; } }
+
+/* code */
+.code { position: relative; background: var(--code-bg); color: var(--code-text); border-radius: var(--radius); border: 1px solid var(--line); box-shadow: var(--shadow); }
+.code .tabs { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid rgba(148,163,184,.18); font-size: .78rem; color: #93a4be; direction: ltr; }
+.code .dots { display: flex; gap: 6px; }
+.code .dots i { width: 10px; height: 10px; border-radius: 50%; background: #334155; display: block; }
+.code pre { margin: 0; padding: 16px; overflow-x: auto; font-size: .86rem; line-height: 1.7; text-align: left; }
+.code .copy { margin-inline-start: auto; font: inherit; font-size: .75rem; color: #c3d0e6; background: transparent; border: 1px solid rgba(148,163,184,.3); border-radius: 8px; padding: 3px 10px; cursor: pointer; }
+.code .copy:hover { background: rgba(148,163,184,.14); }
+.c-k { color: #5eead4; } .c-v { color: #c7d2fe; } .c-c { color: #7b8ca8; }
+
+/* sections */
+section.s { padding: 56px 0; }
+section.s.alt { background: var(--surface-2); border-block: 1px solid var(--line); }
+h2 { font-size: clamp(1.6rem, 4vw, 2.2rem); margin: 0 0 10px; letter-spacing: -.02em; line-height: 1.2; }
+.sub { color: var(--muted); max-width: 70ch; margin: 0 0 28px; }
+h3 { font-size: 1.1rem; margin: 0 0 6px; }
+.grid { display: grid; gap: 16px; }
+@media (min-width: 640px) { .grid.c2 { grid-template-columns: repeat(2, 1fr); } .grid.c3 { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 960px) { .grid.c3 { grid-template-columns: repeat(3, 1fr); } }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+.card p { margin: 0; color: var(--muted); font-size: .95rem; }
+.card .ic { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; margin-bottom: 12px; color: var(--accent-ink); background: linear-gradient(135deg, var(--accent), var(--accent-2)); font-weight: 800; font-size: .95rem; }
+
+/* diagram */
+.figure { background: var(--code-bg); border-radius: var(--radius); border: 1px solid var(--line); overflow: hidden; box-shadow: var(--shadow); }
+.figure img { width: 100%; }
+figcaption { color: var(--muted); font-size: .88rem; margin-top: 10px; }
+.flow { list-style: none; counter-reset: f; padding: 0; margin: 22px 0 0; display: grid; gap: 10px; }
+@media (min-width: 860px) { .flow { grid-template-columns: repeat(5, 1fr); } }
+.flow li { counter-increment: f; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; font-size: .9rem; color: var(--muted); }
+.flow li::before { content: counter(f); display: inline-grid; place-items: center; width: 22px; height: 22px; margin-inline-end: 8px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-weight: 800; font-size: .75rem; }
+
+/* tables */
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); -webkit-overflow-scrolling: touch; }
+table { border-collapse: collapse; width: 100%; font-size: .92rem; min-width: 620px; }
+th, td { text-align: start; padding: 11px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+thead th { background: var(--surface-2); font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); position: sticky; top: 0; }
+html[lang="fa"] thead th { text-transform: none; letter-spacing: 0; font-size: .85rem; }
+tbody tr:last-child td { border-bottom: 0; }
+td.c, th.c { text-align: center; white-space: nowrap; }
+.y { color: var(--ok); font-weight: 700; } .n { color: var(--no); font-weight: 700; } .o { color: var(--maybe); font-weight: 700; }
+.note { color: var(--muted); font-size: .85rem; }
+
+/* steps */
+.steps { list-style: none; counter-reset: st; padding: 0; margin: 0; display: grid; gap: 14px; }
+.steps > li { counter-increment: st; position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 18px 18px 64px; box-shadow: var(--shadow); }
+html[dir="rtl"] .steps > li { padding: 18px 64px 18px 18px; }
+.steps > li::before { content: counter(st); position: absolute; inset-inline-start: 16px; top: 16px; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: var(--accent-ink); font-weight: 800; font-family: var(--font); }
+.steps h3 { margin-bottom: 4px; }
+.steps p { margin: 0 0 8px; color: var(--muted); }
+.steps .code { margin-top: 10px; box-shadow: none; }
+
+/* security */
+.sec { display: grid; gap: 12px; }
+@media (min-width: 760px) { .sec { grid-template-columns: repeat(2, 1fr); } }
+.sec .card { padding: 16px 18px; }
+.sec h3 { display: flex; gap: 8px; align-items: center; }
+.sec h3::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex: none; }
+
+/* shots */
+.shots { display: grid; gap: 18px; }
+@media (min-width: 800px) { .shots { grid-template-columns: repeat(2, 1fr); } }
+.shot { margin: 0; }
+.shot img { border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); width: 100%; background: var(--code-bg); }
+
+/* faq */
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 0; margin-bottom: 10px; }
+summary { cursor: pointer; padding: 14px 18px; font-weight: 700; list-style: none; display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; font-size: 1.3rem; color: var(--accent); line-height: 1; flex: none; }
+details[open] summary::after { content: "\2212"; }
+details > div { padding: 0 18px 16px; color: var(--muted); }
+details > div p { margin: 0 0 8px; }
+
+ul.clean { margin: 0; padding-inline-start: 1.2em; color: var(--muted); }
+ul.clean li { margin-bottom: 8px; }
+ul.clean li::marker { color: var(--accent); }
+.two { display: grid; gap: 24px; }
+@media (min-width: 820px) { .two { grid-template-columns: 1fr 1fr; } }
+
+footer { padding: 40px 0 56px; border-top: 1px solid var(--line); color: var(--muted); font-size: .92rem; }
+footer .row { display: flex; flex-wrap: wrap; gap: 14px 24px; justify-content: space-between; align-items: center; }
+footer nav { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+
+.fa-block { font-family: var(--font-fa); }
+.fa-banner { margin: 0 0 22px; padding: 14px 18px; border: 1px dashed var(--line); border-radius: 12px; color: var(--muted); font-size: .92rem; background: var(--surface); }
+</style>
+</head>
+<body>
+<a class="skip" href="#main"><span lang="en">Skip to content</span><span lang="fa">رفتن به محتوا</span></a>
+
+<header class="top">
+  <div class="wrap bar">
+    <a class="brand" href="#top" aria-label="MirrorGate"><img src="assets/logo.svg" alt="" width="30" height="30">MirrorGate</a>
+    <nav class="links" aria-label="Sections">
+      <a href="#why"><span lang="en">Why</span><span lang="fa">چرا</span></a>
+      <a href="#architecture"><span lang="en">Architecture</span><span lang="fa">معماری</span></a>
+      <a href="#features"><span lang="en">Features</span><span lang="fa">قابلیت‌ها</span></a>
+      <a href="#quickstart"><span lang="en">Quick start</span><span lang="fa">شروع سریع</span></a>
+      <a href="#config"><span lang="en">Config</span><span lang="fa">پیکربندی</span></a>
+      <a href="#security"><span lang="en">Security</span><span lang="fa">امنیت</span></a>
+      <a href="#faq"><span lang="en">FAQ</span><span lang="fa">پرسش‌ها</span></a>
+    </nav>
+    <span class="spacer"></span>
+    <button class="btn" id="langBtn" type="button" aria-label="Switch language"><span lang="en">فارسی</span><span lang="fa">English</span></button>
+    <button class="btn" id="themeBtn" type="button" aria-label="Toggle color theme"><span id="themeLabel">Auto</span></button>
+    <a class="btn" href="https://github.com/moonshadowrev/mirrorgate" rel="noopener">GitHub</a>
+  </div>
+</header>
+
+<main id="main">
+<div id="top"></div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow"><span lang="en">Zero dependencies · PHP 8.3+ · Apache-2.0</span><span lang="fa">بدون وابستگی · PHP 8.3 به بالا · Apache-2.0</span></span>
+
+      <h1 lang="en">Mirror any site on <span class="grad">your own domain.</span></h1>
+      <h1 lang="fa">آینه‌ی هر سایت، روی <span class="grad">دامنه‌ی خودتان.</span></h1>
+
+      <p class="lead" lang="en">MirrorGate is a PHP reverse-proxy mirror for shared hosting. Upload it, set two URLs in <code>.env</code>, and your domain serves a cached, rewritten copy of a remote origin, whatever stack that origin runs.</p>
+      <p class="lead" lang="fa">MirrorGate یک برنامه‌ی PHP برای هاست اشتراکی است که مثل یک CDN کوچک جلوی سایت مبدأ می‌نشیند. آن را آپلود کنید، دو نشانی را در <code>.env</code> بنویسید و دامنه‌تان نسخه‌ی کش‌شده و بازنویسی‌شده‌ی سایت مبدأ را نشان می‌دهد، مهم نیست مبدأ با چه فناوری ساخته شده باشد.</p>
+
+      <div class="cta">
+        <a class="btn primary" href="#quickstart"><span lang="en">Get started in 5 steps</span><span lang="fa">شروع در ۵ گام</span></a>
+        <a class="btn" href="https://github.com/moonshadowrev/mirrorgate" rel="noopener"><span lang="en">View on GitHub</span><span lang="fa">مشاهده در گیت‌هاب</span></a>
+      </div>
+
+      <ul class="badges" aria-label="Project badges">
+        <li><img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="License Apache-2.0" width="110" height="20" loading="lazy"></li>
+        <li><img src="https://img.shields.io/badge/PHP-8.3%2B-777BB4.svg" alt="PHP 8.3+" width="80" height="20" loading="lazy"></li>
+        <li><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs welcome" width="90" height="20" loading="lazy"></li>
+        <li><img src="https://img.shields.io/badge/security-policy-informational.svg" alt="Security policy" width="100" height="20" loading="lazy"></li>
+      </ul>
+    </div>
+
+    <div class="code" aria-label="Example configuration">
+      <div class="tabs"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span>.env</span>
+        <button class="copy" type="button" data-copy="ORIGIN_URL=https://overlord.team&#10;MIRROR_URL=https://overload.ir&#10;">Copy</button></div>
+<pre><span class="c-c"># the only two required settings</span>
+<span class="c-k">ORIGIN_URL</span>=<span class="c-v">https://overlord.team</span>
+<span class="c-k">MIRROR_URL</span>=<span class="c-v">https://overload.ir</span>
+
+<span class="c-c"># everything else is optional</span>
+<span class="c-k">CACHE_STALE_IF_ERROR_SECONDS</span>=<span class="c-v">604800</span>
+<span class="c-k">ERROR_PAGE_LANG</span>=<span class="c-v">fa</span>
+<span class="c-k">RATE_LIMIT_REQUESTS</span>=<span class="c-v">120</span></pre>
+    </div>
+  </div>
+</section>
+
+<!-- WHY -->
+<section class="s" id="why">
+  <div class="wrap">
+    <h2 lang="en">Why MirrorGate</h2>
+    <h2 lang="fa">چرا MirrorGate</h2>
+
+    <p class="sub" lang="en">Your site lives on origin A (say <code>overlord.team</code>). You want the same site under a second domain B (say <code>overload.ir</code>) on a hosting plan that gives you PHP, FTP and a file manager, and nothing else. No root, no DNS control, no Nginx.</p>
+    <p class="sub" lang="fa">سایت شما روی مبدأ A (مثلاً <bdi dir="ltr">overlord.team</bdi>) اجرا می‌شود و می‌خواهید همان سایت روی دامنه‌ی دوم B (مثلاً <bdi dir="ltr">overload.ir</bdi>) هم باز شود. اما هاست شما فقط PHP، FTP و فایل‌منیجر دارد: نه دسترسی روت، نه کنترل DNS، نه Nginx.</p>
+
+    <div class="grid c3">
+      <article class="card"><div class="ic">1</div>
+        <h3 lang="en">Configuration only</h3><p lang="en">No code to edit. Two required variables, safe defaults for everything else, and a self check that tells you what is wrong.</p>
+        <h3 lang="fa">فقط پیکربندی</h3><p lang="fa">لازم نیست کدی را ویرایش کنید. دو متغیر الزامی دارد، بقیه مقدار پیش‌فرض امن دارند و دستور بررسی به شما می‌گوید چه چیزی اشتباه است.</p></article>
+      <article class="card"><div class="ic">2</div>
+        <h3 lang="en">Upload-only friendly</h3><p lang="en">Its own PSR-4 autoloader and <code>.env</code> parser. No Composer on the server, no build step. Needs only curl, json and mbstring.</p>
+        <h3 lang="fa">مناسب هاست آپلودی</h3><p lang="fa">اتولودر و پارسر <code>.env</code> خودش را دارد. روی سرور به Composer و مرحله‌ی build نیاز نیست و فقط به افزونه‌های curl، json و mbstring احتیاج دارد.</p></article>
+      <article class="card"><div class="ic">3</div>
+        <h3 lang="en">Fails gracefully</h3><p lang="en">Origin down, slow or misconfigured? Visitors get a stale cached copy or a clear error page, never a stack trace or your origin address.</p>
+        <h3 lang="fa">خطا را مرتب مدیریت می‌کند</h3><p lang="fa">مبدأ از کار افتاده یا کند است؟ بازدیدکننده نسخه‌ی کش‌شده یا یک صفحه‌ی خطای روشن می‌بیند، نه جزئیات فنی و نه نشانی مبدأ.</p></article>
+    </div>
+  </div>
+</section>
+
+<!-- ARCHITECTURE -->
+<section class="s alt" id="architecture">
+  <div class="wrap">
+    <h2 lang="en">Architecture</h2>
+    <h2 lang="fa">معماری</h2>
+    <p class="sub" lang="en">A front controller in <code>public/index.php</code> validates the request, consults a file cache, fetches from the origin through an SSRF-guarded client, rewrites the response and emits it. Long-lived protocols are handled by an optional daemon on a host that can run one.</p>
+    <p class="sub" lang="fa">کنترلر ورودی در <code>public/index.php</code> درخواست را اعتبارسنجی می‌کند، کش فایلی را می‌بیند، در صورت نیاز از مبدأ (با کلاینتی که در برابر SSRF محافظت شده) پاسخ می‌گیرد، آن را بازنویسی می‌کند و برمی‌گرداند. پروتکل‌های بلندمدت به عهده‌ی یک دیمون اختیاری است که باید روی میزبانی اجرا شود که اجازه‌ی پردازش دائمی می‌دهد.</p>
+
+    <figure class="figure" style="margin:0">
+      <img src="assets/architecture.svg" alt="Diagram: visitors reach domain B, where a request guard, file cache, upstream client and rewriter fetch from origin A over HTTPS. An optional daemon forwards WebSocket, gRPC, TCP and UDP." width="1000" height="520" loading="lazy">
+    </figure>
+    <figcaption lang="en">Solid lines are HTTP(S) handled by PHP. Dashed lines are sockets that only the optional daemon can hold.</figcaption>
+    <figcaption lang="fa">خط‌های ممتد HTTP(S) هستند که PHP مدیریت می‌کند. خط‌چین‌ها سوکت‌هایی هستند که فقط دیمون اختیاری می‌تواند نگه دارد.</figcaption>
+
+    <ol class="flow">
+      <li><span lang="en"><strong>Validate.</strong> Host, size, method, smuggling checks.</span><span lang="fa"><strong>اعتبارسنجی.</strong> هاست، اندازه، متد و بررسی قاچاق درخواست.</span></li>
+      <li><span lang="en"><strong>Cache.</strong> Fresh hit, or stale while revalidating.</span><span lang="fa"><strong>کش.</strong> نسخه‌ی تازه یا کهنه در حین به‌روزرسانی.</span></li>
+      <li><span lang="en"><strong>Fetch.</strong> Pinned DNS, no redirects followed.</span><span lang="fa"><strong>دریافت.</strong> DNS ثابت‌شده و بدون دنبال‌کردن ریدایرکت.</span></li>
+      <li><span lang="en"><strong>Rewrite.</strong> Origin host becomes mirror host.</span><span lang="fa"><strong>بازنویسی.</strong> نشانی مبدأ به نشانی آینه تبدیل می‌شود.</span></li>
+      <li><span lang="en"><strong>Serve.</strong> Or stale copy / error page on failure.</span><span lang="fa"><strong>ارائه.</strong> یا نسخه‌ی کهنه و صفحه‌ی خطا هنگام شکست.</span></li>
+    </ol>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="s" id="features">
+  <div class="wrap">
+    <h2 lang="en">Features, honestly split by where you run it</h2>
+    <h2 lang="fa">قابلیت‌ها، با تفکیک صادقانه‌ی محل اجرا</h2>
+    <p class="sub" lang="en">Shared hosting runs PHP in short-lived request workers. Anything needing a long-lived socket requires the daemon on a VPS or any host where you can start a process.</p>
+    <p class="sub" lang="fa">هاست اشتراکی PHP را فقط در پردازه‌های کوتاه‌مدت اجرا می‌کند. هر چیزی که سوکت پایدار لازم دارد، به دیمون روی VPS یا میزبانی نیاز دارد که اجازه‌ی اجرای پردازه‌ی دائمی بدهد.</p>
+
+    <div class="tablewrap" tabindex="0" role="region" aria-label="Feature matrix">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col"><span lang="en">Capability</span><span lang="fa">قابلیت</span></th>
+            <th scope="col" class="c"><span lang="en">Shared hosting (PHP)</span><span lang="fa">هاست اشتراکی (PHP)</span></th>
+            <th scope="col" class="c"><span lang="en">VPS + daemon</span><span lang="fa">VPS + دیمون</span></th>
+            <th scope="col"><span lang="en">Notes</span><span lang="fa">توضیح</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row"><span lang="en">HTTP/HTTPS reverse proxy</span><span lang="fa">پراکسی معکوس HTTP/HTTPS</span></th><td class="c y"><span lang="en">Yes</span><span lang="fa">بله</span></td><td class="c y"><span lang="en">Yes</span><span lang="fa">بله</span></td><td class="note"><span lang="en">GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS by default</span><span lang="fa">به‌صورت پیش‌فرض GET، HEAD، POST، PUT، PATCH، DELETE و OPTIONS</span></td></tr>
+          <tr><th scope="row"><span lang="en">Host rewriting: HTML, CSS, JSON, XML, headers, cookies, redirects</span><span lang="fa">بازنویسی نشانی در HTML، CSS، JSON، XML، هدرها، کوکی و ریدایرکت</span></th><td class="c y"><span lang="en">Yes</span><span lang="fa">بله</span></td><td class="c y"><span lang="en">Yes</span><span lang="fa">بله</span></td><td class="note"><span lang="en">Includes srcset, Link, CORS, CSP</span><span lang="fa">شامل srcset، Link، CORS و CSP</span></td></tr>
+          <tr><th scope="row"><span lang="en">JavaScript host rewriting</span><span lang="fa">بازنویسی نشانی در جاوااسکریپت</span></th><td class="c o"><span lang="en">Opt-in</span><span lang="fa">اختیاری</span></td><td class="c o"><span lang="en">Opt-in</span><span lang="fa">اختیاری</span></td><td class="note"><span lang="en"><code>REWRITE_JS=true</code>, literal replacement only</span><span lang="fa"><code>REWRITE_JS=true</code>، فقط جایگزینی متنی</span></td></tr>
+          <tr><th scope="row"><span lang="en">File cache, stale-while-revalidate, stale-if-error</span><span lang="fa">کش فایلی، SWR و stale-if-error</span></th><td class="c y"><span lang="en">Yes</span><span lang="fa">بله</span></td><td class="c y"><span lang="en">Yes</span><span lang="fa">بله</span></td><td class="note"><span lang="en">Bounded by account disk and inode quota</span><span lang="fa">محدود به سهمیه‌ی دیسک و inode هاست</span></td></tr>
+          <tr><th scope="row"><span lang="en">Friendly error pages, circuit breaker</span><span lang="fa">صفحه‌ی خطای دوستانه و قطع‌کننده‌ی مدار</span></th><td class="c y"><span lang="en">Yes</span><span lang="fa">بله</span></td><td class="c y"><span lang="en">Yes</span><span lang="fa">بله</span></td><td class="note"><span lang="en">English or Persian built in</span><span lang="fa">انگلیسی و فارسی داخلی</span></td></tr>
+          <tr><th scope="row"><span lang="en">Server-Sent Events</span><span lang="fa">رویدادهای سمت سرور (SSE)</span></th><td class="c o"><span lang="en">Best effort</span><span lang="fa">تلاش بر اساس امکانات</span></td><td class="c o"><span lang="en">Best effort</span><span lang="fa">تلاش بر اساس امکانات</span></td><td class="note"><span lang="en">Needs unbuffered PHP output; capped by <code>SSE_MAX_DURATION</code></span><span lang="fa">به خروجی بدون بافر نیاز دارد و با <code>SSE_MAX_DURATION</code> محدود می‌شود</span></td></tr>
+          <tr><th scope="row"><span lang="en">Admin: health, stats, purge, check</span><span lang="fa">مدیریت: سلامت، آمار، پاک‌سازی، بررسی</span></th><td class="c y"><span lang="en">Yes</span><span lang="fa">بله</span></td><td class="c y"><span lang="en">Yes</span><span lang="fa">بله</span></td><td class="note"><span lang="en">Off by default, bearer token</span><span lang="fa">پیش‌فرض خاموش، با توکن</span></td></tr>
+          <tr><th scope="row"><span lang="en">Rate and concurrency limits</span><span lang="fa">محدودیت نرخ و هم‌زمانی</span></th><td class="c y"><span lang="en">Yes</span><span lang="fa">بله</span></td><td class="c y"><span lang="en">Yes</span><span lang="fa">بله</span></td><td class="note"><span lang="en">File driver, or APCu if present</span><span lang="fa">درایور فایل، یا APCu در صورت وجود</span></td></tr>
+          <tr><th scope="row"><span lang="en">Multiple (sub)domains</span><span lang="fa">چند (زیر)دامنه</span></th><td class="c y"><span lang="en">Yes</span><span lang="fa">بله</span></td><td class="c y"><span lang="en">Yes</span><span lang="fa">بله</span></td><td class="note"><span lang="en">One instance per host</span><span lang="fa">برای هر هاست یک نمونه</span></td></tr>
+          <tr><th scope="row">WebSocket</th><td class="c n"><span lang="en">No (501)</span><span lang="fa">خیر (۵۰۱)</span></td><td class="c y"><span lang="en">Yes</span><span lang="fa">بله</span></td><td class="note"><span lang="en">PHP cannot hold the socket</span><span lang="fa">PHP نمی‌تواند سوکت را نگه دارد</span></td></tr>
+          <tr><th scope="row">gRPC</th><td class="c n"><span lang="en">No</span><span lang="fa">خیر</span></td><td class="c y"><span lang="en">Yes</span><span lang="fa">بله</span></td><td class="note"><span lang="en">HTTP/2 pipe (h2c or TLS), L4 passthrough</span><span lang="fa">لوله‌ی HTTP/2 (h2c یا TLS)، عبور در لایه‌ی ۴</span></td></tr>
+          <tr><th scope="row"><span lang="en">Raw TCP</span><span lang="fa">TCP خام</span></th><td class="c n"><span lang="en">No</span><span lang="fa">خیر</span></td><td class="c y"><span lang="en">Yes</span><span lang="fa">بله</span></td><td class="note"><code>tcp://</code> → <code>tcp://</code> / <code>tls://</code></td></tr>
+          <tr><th scope="row">UDP</th><td class="c n"><span lang="en">No</span><span lang="fa">خیر</span></td><td class="c y"><span lang="en">Yes</span><span lang="fa">بله</span></td><td class="note"><span lang="en">Session table, amplification limit</span><span lang="fa">جدول نشست و محدودیت تقویت ترافیک</span></td></tr>
+          <tr><th scope="row"><span lang="en">Wildcard <code>*.domain</code> mirroring</span><span lang="fa">آینه‌ی ستاره‌ای <code>*.domain</code></span></th><td class="c n"><span lang="en">No</span><span lang="fa">خیر</span></td><td class="c n"><span lang="en">No</span><span lang="fa">خیر</span></td><td class="note"><span lang="en">Use explicit <code>HOST_MAP</code></span><span lang="fa">از <code>HOST_MAP</code> صریح استفاده کنید</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- QUICK START -->
+<section class="s alt" id="quickstart">
+  <div class="wrap">
+    <h2 lang="en">Quick start in 5 steps</h2>
+    <h2 lang="fa">شروع سریع در ۵ گام</h2>
+    <p class="sub" lang="en">Requires PHP 8.3 or newer with <code>ext-curl</code>, <code>ext-json</code> and <code>ext-mbstring</code>. No Composer, and no SSH needed for the web app.</p>
+    <p class="sub" lang="fa">به PHP نسخه‌ی ۸٫۳ یا بالاتر با افزونه‌های <code>ext-curl</code>، <code>ext-json</code> و <code>ext-mbstring</code> نیاز دارید. به Composer احتیاجی نیست و برای خود برنامه‌ی وب SSH هم لازم نیست.</p>
+
+    <ol class="steps">
+      <li>
+        <h3 lang="en">Upload</h3><p lang="en">Upload the project to your account, for example <code>~/mirrors/overload.ir/</code>.</p>
+        <h3 lang="fa">آپلود</h3><p lang="fa">پروژه را روی حساب هاست آپلود کنید، مثلاً در <bdi dir="ltr"><code>~/mirrors/overload.ir/</code></bdi>.</p>
+      </li>
+      <li>
+        <h3 lang="en">Point the docroot at <code>public/</code></h3><p lang="en">Set the domain's document root to the <code>public</code> folder in your control panel. If the panel cannot, use the root shim with the self-protecting <code>.env.php</code> form described in <code>.env.example</code>.</p>
+        <h3 lang="fa">ریشه‌ی دامنه را روی <code>public/</code> بگذارید</h3><p lang="fa">در کنترل‌پنل، Document Root دامنه را روی پوشه‌ی <code>public</code> تنظیم کنید. اگر پنل اجازه نمی‌دهد، از فایل ریشه‌ی <code>index.php</code> و حالت خودمحافظ <code>.env.php</code> استفاده کنید که در <code>.env.example</code> توضیح داده شده است.</p>
+      </li>
+      <li>
+        <h3 lang="en">Create <code>.env</code> one level above <code>public/</code></h3><p lang="en">Only two values are required.</p>
+        <h3 lang="fa">فایل <code>.env</code> را یک سطح بالاتر از <code>public/</code> بسازید</h3><p lang="fa">فقط دو مقدار الزامی است.</p>
+        <div class="code"><div class="tabs"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span>shell</span><button class="copy" type="button" data-copy="cp .env.example .env">Copy</button></div>
+<pre>cp .env.example .env
+<span class="c-k">ORIGIN_URL</span>=<span class="c-v">https://overlord.team</span>
+<span class="c-k">MIRROR_URL</span>=<span class="c-v">https://overload.ir</span></pre></div>
+      </li>
+      <li>
+        <h3 lang="en">Check the setup</h3><p lang="en">With SSH run the command below. Without SSH, enable the admin with a random 32+ character <code>ADMIN_TOKEN</code>, call <code>/__mirrorgate/check</code> with <code>Authorization: Bearer ...</code>, then disable it again if you do not need it.</p>
+        <h3 lang="fa">وضعیت نصب را بررسی کنید</h3><p lang="fa">اگر SSH دارید دستور زیر را اجرا کنید. بدون SSH، بخش مدیریت را با یک <code>ADMIN_TOKEN</code> تصادفی دست‌کم ۳۲ نویسه‌ای روشن کنید، آدرس <code>/__mirrorgate/check</code> را با هدر <code>Authorization: Bearer ...</code> صدا بزنید و بعد در صورت نیاز دوباره خاموشش کنید.</p>
+        <div class="code"><div class="tabs"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span>shell</span><button class="copy" type="button" data-copy="php bin/mirrorgate check --network">Copy</button></div>
+<pre>php bin/mirrorgate check --network</pre></div>
+      </li>
+      <li>
+        <h3 lang="en">Point DNS and TLS, then open the mirror</h3><p lang="en">Point the mirror domain at the hosting account, issue a certificate (AutoSSL or Let's Encrypt) and visit <code>https://overload.ir/</code>.</p>
+        <h3 lang="fa">DNS و TLS را تنظیم و آینه را باز کنید</h3><p lang="fa">دامنه‌ی آینه را به حساب هاست وصل کنید، گواهی TLS بگیرید (AutoSSL یا Let's Encrypt) و <bdi dir="ltr"><code>https://overload.ir/</code></bdi> را باز کنید.</p>
+      </li>
+    </ol>
+
+    <h3 style="margin-top:34px" lang="en">Several sites on one account</h3>
+    <h3 style="margin-top:34px" lang="fa">چند سایت روی یک حساب</h3>
+    <p class="sub" lang="en">One instance serves exactly one mirror (sub)domain: its own docroot, <code>.env</code>, cache and limits. Instances never share state.</p>
+    <p class="sub" lang="fa">هر نمونه دقیقاً یک (زیر)دامنه‌ی آینه را سرو می‌کند و docroot، فایل <code>.env</code>، کش و محدودیت‌های جدا دارد. نمونه‌ها هیچ وضعیتی را با هم شریک نیستند.</p>
+    <div class="code"><div class="tabs"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span>layout</span></div>
+<pre><span class="c-c"># ~/mirrors/overload.ir/.env</span>
+<span class="c-k">ORIGIN_URL</span>=<span class="c-v">https://overlord.team</span>
+<span class="c-k">MIRROR_URL</span>=<span class="c-v">https://overload.ir</span>
+<span class="c-k">HOST_MAP</span>=<span class="c-v">api.overlord.team=api.overload.ir</span>
+
+<span class="c-c"># ~/mirrors/api.overload.ir/.env</span>
+<span class="c-k">ORIGIN_URL</span>=<span class="c-v">https://api.overlord.team</span>
+<span class="c-k">MIRROR_URL</span>=<span class="c-v">https://api.overload.ir</span>
+<span class="c-k">HOST_MAP</span>=<span class="c-v">overlord.team=overload.ir</span></pre></div>
+    <p class="note" style="margin-top:10px" lang="en">Keep <code>HOST_MAP</code> reciprocal and choose <code>COOKIE_DOMAIN_MODE</code> deliberately. You can also keep one copy of the code and give each subdomain a small <code>index.php</code> stub that points at its own <code>.env</code>.</p>
+    <p class="note" style="margin-top:10px" lang="fa">مقدار <code>HOST_MAP</code> را دوطرفه نگه دارید و <code>COOKIE_DOMAIN_MODE</code> را آگاهانه انتخاب کنید. می‌توانید فقط یک نسخه از کد داشته باشید و برای هر زیردامنه یک فایل کوچک <code>index.php</code> بگذارید که به <code>.env</code> همان نمونه اشاره کند.</p>
+  </div>
+</section>
+
+<!-- CONFIG -->
+<section class="s" id="config">
+  <div class="wrap">
+    <h2 lang="en">Configuration</h2>
+    <h2 lang="fa">پیکربندی</h2>
+    <p class="sub" lang="en">Everything is an environment variable. A process variable of the same name overrides the file. <code>.env.example</code> lists every option; <code>php bin/mirrorgate config:dump</code> prints the effective config with secrets masked.</p>
+    <p class="sub" lang="fa">همه‌چیز متغیر محیطی است و اگر متغیری هم‌نام در محیط پردازه تعریف شده باشد، بر فایل ارجحیت دارد. فایل <code>.env.example</code> همه‌ی گزینه‌ها را دارد و دستور <code>php bin/mirrorgate config:dump</code> پیکربندی نهایی را با ماسک‌شدن رازها نشان می‌دهد.</p>
+
+    <div class="tablewrap" tabindex="0" role="region" aria-label="Configuration reference">
+      <table>
+        <thead><tr><th scope="col"><span lang="en">Variable</span><span lang="fa">متغیر</span></th><th scope="col"><span lang="en">Default</span><span lang="fa">پیش‌فرض</span></th><th scope="col"><span lang="en">Purpose</span><span lang="fa">کاربرد</span></th></tr></thead>
+        <tbody>
+          <tr><td><code>ORIGIN_URL</code></td><td><span lang="en">required</span><span lang="fa">الزامی</span></td><td><span lang="en">Remote site to mirror, <code>https://host[:port]</code></span><span lang="fa">سایت مبدأ، فقط به‌شکل <code>https://host[:port]</code></span></td></tr>
+          <tr><td><code>MIRROR_URL</code></td><td><span lang="en">required</span><span lang="fa">الزامی</span></td><td><span lang="en">Public URL of this mirror; host must differ from origin</span><span lang="fa">نشانی عمومی آینه؛ میزبان آن باید با مبدأ فرق کند</span></td></tr>
+          <tr><td><code>HOST_MAP</code></td><td>-</td><td><span lang="en">Sibling mappings, <code>api.overlord.team=api.overload.ir</code></span><span lang="fa">نگاشت زیردامنه‌های هم‌خانواده</span></td></tr>
+          <tr><td><code>STORAGE_DIR</code></td><td><code>&lt;env dir&gt;/var</code></td><td><span lang="en">Cache, logs, locks; must be outside the docroot</span><span lang="fa">کش، لاگ و قفل‌ها؛ باید بیرون از docroot باشد</span></td></tr>
+          <tr><td><code>ORIGIN_CONNECT_TIMEOUT</code> / <code>ORIGIN_TIMEOUT</code></td><td>5 / 30 s</td><td><span lang="en">Connect and total timeouts</span><span lang="fa">زمان اتصال و زمان کل</span></td></tr>
+          <tr><td><code>MAX_REQUEST_BODY_BYTES</code></td><td>10M</td><td><span lang="en">Largest accepted request body</span><span lang="fa">بزرگ‌ترین بدنه‌ی پذیرفته‌شده‌ی درخواست</span></td></tr>
+          <tr><td><code>REWRITE_JS</code> / <code>REWRITE_RSC</code></td><td>false</td><td><span lang="en">Opt-in JavaScript and React Server Components rewriting</span><span lang="fa">بازنویسی اختیاری جاوااسکریپت و RSC</span></td></tr>
+          <tr><td><code>SEO_MODE</code></td><td>mirror</td><td><span lang="en"><code>mirror</code>, <code>canonical-origin</code> or <code>noindex</code></span><span lang="fa"><code>mirror</code>، <code>canonical-origin</code> یا <code>noindex</code></span></td></tr>
+          <tr><td><code>COOKIE_DOMAIN_MODE</code></td><td>drop</td><td><span lang="en"><code>drop</code> (host-only) or <code>rewrite</code></span><span lang="fa"><code>drop</code> (فقط همین هاست) یا <code>rewrite</code></span></td></tr>
+          <tr><td><code>CACHE_DEFAULT_TTL</code></td><td>300 s</td><td><span lang="en">TTL when the origin gives none</span><span lang="fa">TTL زمانی که مبدأ چیزی نگفته</span></td></tr>
+          <tr><td><code>CACHE_STALE_IF_ERROR_SECONDS</code></td><td>604800</td><td><span lang="en">How long stale copies may cover origin failures</span><span lang="fa">مدتی که نسخه‌ی کهنه می‌تواند خطای مبدأ را بپوشاند</span></td></tr>
+          <tr><td><code>CACHE_MAX_BYTES</code> / <code>CACHE_MAX_ENTRIES</code></td><td>256M / 20000</td><td><span lang="en">Cache quotas</span><span lang="fa">سهمیه‌ی کش</span></td></tr>
+          <tr><td><code>RATE_LIMIT_REQUESTS</code> / <code>RATE_LIMIT_WINDOW</code></td><td>120 / 60 s</td><td><span lang="en">Per-client request limit</span><span lang="fa">سقف درخواست برای هر کلاینت</span></td></tr>
+          <tr><td><code>SSE_MAX_DURATION</code></td><td>60 s</td><td><span lang="en">Cap on one event stream</span><span lang="fa">سقف مدت هر جریان رویداد</span></td></tr>
+          <tr><td><code>ADMIN_ENABLED</code> / <code>ADMIN_TOKEN</code></td><td>false / -</td><td><span lang="en">Admin endpoints; token of 32+ random characters</span><span lang="fa">بخش مدیریت؛ توکن تصادفی دست‌کم ۳۲ نویسه</span></td></tr>
+          <tr><td><code>ERROR_PAGE_LANG</code></td><td>en</td><td><span lang="en">Error page language: <code>en</code> or <code>fa</code></span><span lang="fa">زبان صفحه‌ی خطا: <code>en</code> یا <code>fa</code></span></td></tr>
+          <tr><td><code>DAEMON_LISTEN_1</code> … <code>_32</code></td><td>-</td><td><span lang="en">Daemon listeners</span><span lang="fa">شنونده‌های دیمون</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="margin-top:34px" lang="en">Optional daemon (WebSocket, gRPC, TCP, UDP)</h3>
+    <h3 style="margin-top:34px" lang="fa">دیمون اختیاری (WebSocket، gRPC، TCP، UDP)</h3>
+    <div class="code"><div class="tabs"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span>.env + shell</span></div>
+<pre><span class="c-k">DAEMON_LISTEN_1</span>=<span class="c-v">ws://127.0.0.1:9001-&gt;wss://overlord.team:443</span>
+<span class="c-k">DAEMON_LISTEN_2</span>=<span class="c-v">tcp://127.0.0.1:9002-&gt;tls://overlord.team:443</span>
+<span class="c-k">DAEMON_LISTEN_3</span>=<span class="c-v">grpc://127.0.0.1:9004-&gt;tls://overlord.team:443</span>
+
+php bin/mirrorgate-daemon check
+php bin/mirrorgate-daemon start   <span class="c-c"># or --foreground under systemd</span></pre></div>
+    <p class="note" style="margin-top:10px" lang="en">Listeners bind to loopback by default and targets are limited to the origin host. Put a TLS-terminating proxy in front, or opt in to a public bind with <code>DAEMON_ALLOW_PUBLIC_BIND=true</code>.</p>
+    <p class="note" style="margin-top:10px" lang="fa">شنونده‌ها به‌طور پیش‌فرض فقط روی loopback بسته می‌شوند و مقصدها به میزبان مبدأ محدودند. یک پراکسی با پایان‌دهی TLS جلوی آن بگذارید یا با <code>DAEMON_ALLOW_PUBLIC_BIND=true</code> آگاهانه اتصال عمومی را فعال کنید.</p>
+  </div>
+</section>
+
+<!-- SECURITY -->
+<section class="s alt" id="security">
+  <div class="wrap">
+    <h2 lang="en">Security first</h2>
+    <h2 lang="fa">امنیت در اولویت</h2>
+
+    <div class="sec">
+      <article class="card"><h3>SSRF</h3>
+        <p lang="en">Upstream URL comes only from configuration. Every DNS answer is checked against private and reserved ranges, the validated IP is pinned, redirects are never followed, and TLS verification cannot be turned off.</p>
+        <p lang="fa">نشانی مبدأ فقط از پیکربندی ساخته می‌شود. هر پاسخ DNS با بازه‌های خصوصی و رزروشده مقایسه می‌شود، IP تأییدشده ثابت می‌ماند، ریدایرکت دنبال نمی‌شود و تأیید TLS را نمی‌توان خاموش کرد.</p></article>
+      <article class="card"><h3 lang="en">Host header attacks</h3><h3 lang="fa">حمله از راه هدر Host</h3>
+        <p lang="en">An unknown <code>Host</code> gets <code>421</code>. Mirror URLs are built from configuration, never from <code>Host</code> or <code>X-Forwarded-*</code>.</p>
+        <p lang="fa">هاست ناشناس پاسخ <code>421</code> می‌گیرد. نشانی آینه فقط از پیکربندی ساخته می‌شود، نه از <code>Host</code> یا <code>X-Forwarded-*</code>.</p></article>
+      <article class="card"><h3 lang="en">CRLF and request smuggling</h3><h3 lang="fa">تزریق CRLF و قاچاق درخواست</h3>
+        <p lang="en">Control characters and bad header names are rejected. <code>Content-Length</code> with <code>Transfer-Encoding</code>, duplicate lengths and odd encodings fail with 400 or 501.</p>
+        <p lang="fa">نویسه‌های کنترلی و نام هدر نامعتبر رد می‌شوند. ترکیب <code>Content-Length</code> با <code>Transfer-Encoding</code>، طول‌های تکراری و کدگذاری‌های غیرعادی با ۴۰۰ یا ۵۰۱ رد می‌شوند.</p></article>
+      <article class="card"><h3 lang="en">Cache poisoning and traversal</h3><h3 lang="fa">مسموم‌سازی کش و پیمایش مسیر</h3>
+        <p lang="en">Keys use normalized path, query and <code>Vary</code>. Cache files are addressed by sha256, never by request path. Dot segments, encoded slashes and NUL are rejected.</p>
+        <p lang="fa">کلید کش از مسیر نرمال‌شده، کوئری و <code>Vary</code> ساخته می‌شود. فایل‌های کش با sha256 نام‌گذاری می‌شوند، نه با مسیر درخواست. نقطه‌بخش‌ها، اسلش کدشده و NUL رد می‌شوند.</p></article>
+      <article class="card"><h3 lang="en">Open redirect and XSS</h3><h3 lang="fa">ریدایرکت باز و XSS</h3>
+        <p lang="en">Redirects are rewritten against a strict host map and a leading <code>//</code> is collapsed. Rewriting replaces host literals only and never injects markup.</p>
+        <p lang="fa">ریدایرکت‌ها بر پایه‌ی یک نگاشت سخت‌گیرانه بازنویسی می‌شوند و <code>//</code> ابتدای مسیر به یک اسلش تبدیل می‌شود. بازنویسی فقط نشانی‌ها را جایگزین می‌کند و هیچ نشانه‌گذاری‌ای تزریق نمی‌کند.</p></article>
+      <article class="card"><h3 lang="en">Admin and DoS</h3><h3 lang="fa">مدیریت و DoS</h3>
+        <p lang="en">Admin is off by default, uses a constant-time token check with lockout and an optional IP allowlist. Limits cover body size, URL, headers, timeouts, concurrency, streams and rate.</p>
+        <p lang="fa">بخش مدیریت پیش‌فرض خاموش است، توکن را با مقایسه‌ی زمان‌ثابت بررسی می‌کند، قفل پس از تلاش‌های ناموفق دارد و فهرست مجاز IP اختیاری است. محدودیت‌ها شامل اندازه‌ی بدنه، نشانی، هدرها، زمان‌ها، هم‌زمانی، جریان و نرخ می‌شوند.</p></article>
+      <article class="card"><h3 lang="en">No leaks</h3><h3 lang="fa">بدون نشت اطلاعات</h3>
+        <p lang="en"><code>.env</code> must live outside the docroot or use the self-protecting form, otherwise boot fails closed. Error pages and admin output never show the origin address, paths or stack traces.</p>
+        <p lang="fa">فایل <code>.env</code> باید بیرون از docroot باشد یا از حالت خودمحافظ استفاده کند، وگرنه اجرا متوقف می‌شود. صفحه‌های خطا و خروجی مدیریت هرگز نشانی مبدأ، مسیرها یا stack trace را نشان نمی‌دهند.</p></article>
+      <article class="card"><h3 lang="en">What it cannot do</h3><h3 lang="fa">چه کارهایی از آن برنمی‌آید</h3>
+        <p lang="en">It cannot protect visitors from a malicious origin, and it is not a WAF or an anonymizer. Report vulnerabilities privately through the security policy.</p>
+        <p lang="fa">نمی‌تواند بازدیدکننده را از یک مبدأ مخرب محافظت کند و نه WAF است و نه ابزار گمنامی. آسیب‌پذیری‌ها را از مسیر خط‌مشی امنیتی و به‌صورت خصوصی گزارش کنید.</p></article>
+    </div>
+  </div>
+</section>
+
+<!-- SCREENSHOTS -->
+<section class="s" id="screenshots">
+  <div class="wrap">
+    <h2 lang="en">Screenshots</h2>
+    <h2 lang="fa">تصویرها</h2>
+    <p class="sub" lang="en">The first two are captures from the bundled demo origin and test harness. The last two are illustrations, not live captures.</p>
+    <p class="sub" lang="fa">دو تصویر اول از مبدأ نمایشی و محیط آزمون پروژه گرفته شده‌اند. دو تصویر آخر تصویرسازی هستند و ثبت زنده نیستند.</p>
+    <div class="shots">
+      <figure class="shot"><img src="assets/origin-vs-mirror.png" alt="The same page on the origin and on the mirror with every host literal rewritten" width="1200" height="640" loading="lazy">
+        <figcaption lang="en">Same page on origin and mirror, host literals rewritten.</figcaption><figcaption lang="fa">یک صفحه روی مبدأ و آینه؛ همه‌ی نشانی‌ها بازنویسی شده‌اند.</figcaption></figure>
+      <figure class="shot"><img src="assets/cache-headers.png" alt="curl output showing X-MirrorGate-Cache MISS on the first request" width="900" height="520" loading="lazy">
+        <figcaption lang="en">Cache headers on a first (MISS) and second request.</figcaption><figcaption lang="fa">هدرهای کش در درخواست اول (MISS) و دوم.</figcaption></figure>
+      <figure class="shot"><img src="assets/error-page.svg" alt="Illustration of the friendly 502 error page" width="1000" height="420" loading="lazy">
+        <figcaption lang="en">Illustration: friendly error page.</figcaption><figcaption lang="fa">تصویرسازی: صفحه‌ی خطای دوستانه.</figcaption></figure>
+      <figure class="shot"><img src="assets/cli-check.svg" alt="Illustration of mirrorgate check terminal output" width="1000" height="380" loading="lazy">
+        <figcaption lang="en">Illustration: the setup check.</figcaption><figcaption lang="fa">تصویرسازی: بررسی نصب.</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<!-- LIMITS + ROADMAP -->
+<section class="s alt" id="limits">
+  <div class="wrap two">
+    <div>
+      <h2 lang="en">Limitations</h2><h2 lang="fa">محدودیت‌ها</h2>
+      <ul class="clean" lang="en">
+        <li>WebSocket, gRPC, TCP and UDP need <code>bin/mirrorgate-daemon</code> on a host that allows a long-lived process.</li>
+        <li>SSE holds one PHP worker per open stream and is capped. Buffering hosts delay events.</li>
+        <li>No wildcard subdomain mirroring: one instance and an explicit <code>HOST_MAP</code> per host.</li>
+        <li>Prefix mode merges origin hosts into one browser origin and needs an explicit acknowledgement.</li>
+        <li>JavaScript rewriting is literal replacement. Computed or obfuscated hosts are not rewritten.</li>
+        <li>React Server Component streams are not rewritten by default.</li>
+        <li>Cache size is bounded by your account's disk and inode quota.</li>
+        <li>Not a WAF and not an anonymizer.</li>
+      </ul>
+      <ul class="clean" lang="fa">
+        <li>WebSocket، gRPC، TCP و UDP به <code>bin/mirrorgate-daemon</code> روی میزبانی نیاز دارند که پردازه‌ی دائمی را مجاز بداند.</li>
+        <li>SSE به‌ازای هر جریان باز یک پردازه‌ی PHP را اشغال می‌کند و سقف دارد. در هاست‌های بافرکننده، رویدادها با تأخیر می‌رسند.</li>
+        <li>آینه‌ی ستاره‌ای زیردامنه‌ها پشتیبانی نمی‌شود؛ برای هر هاست یک نمونه و یک <code>HOST_MAP</code> صریح لازم است.</li>
+        <li>حالت prefix چند میزبان مبدأ را در یک origin مرورگر ادغام می‌کند و تأیید صریح می‌خواهد.</li>
+        <li>بازنویسی جاوااسکریپت فقط جایگزینی متنی است و نشانی‌های محاسبه‌شده یا مبهم‌شده را تغییر نمی‌دهد.</li>
+        <li>جریان‌های React Server Components به‌طور پیش‌فرض بازنویسی نمی‌شوند.</li>
+        <li>اندازه‌ی کش به سهمیه‌ی دیسک و inode هاست محدود است.</li>
+        <li>WAF نیست و ابزار گمنامی هم نیست.</li>
+      </ul>
+    </div>
+    <div>
+      <h2 lang="en">Roadmap</h2><h2 lang="fa">نقشه‌ی راه</h2>
+      <p class="note" lang="en">Direction, not promises.</p><p class="note" lang="fa">این‌ها جهت حرکت‌اند، نه تعهد.</p>
+      <ul class="clean" lang="en">
+        <li>Tagged releases with an upload archive and checksums.</li>
+        <li>Optional Redis or SQLite cache backend.</li>
+        <li>Cache tags and targeted purge.</li>
+        <li>Better Next.js and RSC payload handling.</li>
+        <li>One-command demo with the bundled test origin.</li>
+        <li>More error page languages.</li>
+      </ul>
+      <ul class="clean" lang="fa">
+        <li>انتشار نسخه‌های برچسب‌دار با بسته‌ی آماده‌ی آپلود و چکسام.</li>
+        <li>پشتیبان کش اختیاری با Redis یا SQLite.</li>
+        <li>برچسب‌های کش و پاک‌سازی هدفمند.</li>
+        <li>پشتیبانی بهتر از Next.js و داده‌های RSC.</li>
+        <li>دموی تک‌دستوری با مبدأ آزمایشی همراه پروژه.</li>
+        <li>زبان‌های بیشتر برای صفحه‌ی خطا.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="s" id="faq">
+  <div class="wrap">
+    <h2 lang="en">FAQ</h2><h2 lang="fa">پرسش‌های پرتکرار</h2>
+    <div style="margin-top:20px">
+      <details><summary><span lang="en">Is mirroring a site legal?</span><span lang="fa">آینه‌کردن سایت قانونی است؟</span></summary><div>
+        <p lang="en">MirrorGate is a tool. Mirroring a site you do not own or have permission for may violate copyright, terms of service or local law. Use it for your own properties, for sites that allow it, or for resilience in front of an origin you operate.</p>
+        <p lang="fa">MirrorGate فقط یک ابزار است. آینه‌کردن سایتی که مال شما نیست یا اجازه‌اش را ندارید، ممکن است حق نشر، شرایط استفاده یا قانون محلی را نقض کند. از آن برای دارایی‌های خودتان، سایت‌هایی که اجازه می‌دهند، یا برای پایداری جلوی مبدأی که خودتان اداره می‌کنید استفاده کنید.</p></div></details>
+      <details><summary><span lang="en">Does the origin stack matter?</span><span lang="fa">فناوری مبدأ مهم است؟</span></summary><div>
+        <p lang="en">No. It speaks HTTP and rewrites hosts in common formats. Bundles with hard-coded absolute origin URLs need <code>REWRITE_JS=true</code>; hosts embedded in RSC payloads are a known hard case.</p>
+        <p lang="fa">نه. فقط HTTP صحبت می‌کند و نشانی‌ها را در قالب‌های رایج بازنویسی می‌کند. بسته‌هایی که نشانی مطلق مبدأ را در کد نوشته‌اند به <code>REWRITE_JS=true</code> نیاز دارند و نشانی‌های داخل داده‌های RSC هنوز مورد دشوار شناخته‌شده‌اند.</p></div></details>
+      <details><summary><span lang="en">Can users log in through the mirror?</span><span lang="fa">کاربران می‌توانند از طریق آینه وارد حساب شوند؟</span></summary><div>
+        <p lang="en">Cookies are forwarded and rewritten. Anyone who operates the mirror can read what passes through it, so never enter credentials on a mirror you do not control.</p>
+        <p lang="fa">کوکی‌ها ارسال و بازنویسی می‌شوند. اما هر کس آینه را اداره کند می‌تواند ترافیک عبوری را ببیند؛ پس هرگز روی آینه‌ای که خودتان کنترل نمی‌کنید رمز عبور وارد نکنید.</p></div></details>
+      <details><summary><span lang="en">Does it hide my origin?</span><span lang="fa">مبدأ من پنهان می‌ماند؟</span></summary><div>
+        <p lang="en">It does not claim to. Headers and error pages never leak origin details, but the hostname still appears in DNS history, certificates and anything the origin embeds itself.</p>
+        <p lang="fa">چنین ادعایی ندارد. هدرها و صفحه‌های خطا جزئیات مبدأ را فاش نمی‌کنند، اما نام میزبان همچنان در تاریخچه‌ی DNS، گواهی‌ها و هر چیزی که خود مبدأ درج می‌کند دیده می‌شود.</p></div></details>
+      <details><summary><span lang="en">Why not Cloudflare or Nginx?</span><span lang="fa">چرا Cloudflare یا Nginx نه؟</span></summary><div>
+        <p lang="en">If you control DNS or a server, use them; they do this better. MirrorGate is for accounts where PHP and a file manager are all you have.</p>
+        <p lang="fa">اگر DNS یا سرور را در اختیار دارید از همان‌ها استفاده کنید، چون این کار را بهتر انجام می‌دهند. MirrorGate برای حساب‌هایی است که فقط PHP و فایل‌منیجر دارند.</p></div></details>
+      <details><summary><span lang="en">How do I clear the cache?</span><span lang="fa">کش را چطور پاک کنم؟</span></summary><div>
+        <p lang="en"><code>php bin/mirrorgate purge --all</code>, or <code>--prefix=/blog</code>, or <code>--url=/path</code>. The authenticated admin purge endpoint does the same over HTTP.</p>
+        <p lang="fa">با <code>php bin/mirrorgate purge --all</code> یا گزینه‌های <code>--prefix=/blog</code> و <code>--url=/path</code>. نقطه‌ی پاک‌سازی بخش مدیریت هم همین کار را از راه HTTP و با احراز هویت انجام می‌دهد.</p></div></details>
+      <details><summary><span lang="en">Which PHP versions?</span><span lang="fa">با کدام نسخه‌های PHP کار می‌کند؟</span></summary><div>
+        <p lang="en">PHP 8.3 minimum. The code avoids deprecated APIs, dynamic properties and implicit nullable types, so it is written to run clean on 8.4 and 8.5.</p>
+        <p lang="fa">حداقل PHP 8.3. کد از API های منسوخ، ویژگی‌های پویا و نوع‌های nullable ضمنی دوری می‌کند تا روی نسخه‌های 8.4 و 8.5 هم بدون هشدار اجرا شود.</p></div></details>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap row">
+    <div><strong>MirrorGate</strong> · Apache-2.0 · <span lang="en">Built for hosts where PHP is all you get.</span><span lang="fa">ساخته‌شده برای هاست‌هایی که فقط PHP دارند.</span></div>
+    <nav aria-label="Project links">
+      <a href="https://github.com/moonshadowrev/mirrorgate" rel="noopener">GitHub</a>
+      <a href="https://github.com/moonshadowrev/mirrorgate/issues" rel="noopener"><span lang="en">Issues</span><span lang="fa">گزارش مشکل</span></a>
+      <a href="https://github.com/moonshadowrev/mirrorgate/security/policy" rel="noopener"><span lang="en">Security policy</span><span lang="fa">خط‌مشی امنیتی</span></a>
+      <a href="https://github.com/moonshadowrev/mirrorgate/blob/main/CONTRIBUTING.md" rel="noopener"><span lang="en">Contributing</span><span lang="fa">مشارکت</span></a>
+      <a href="https://github.com/moonshadowrev/mirrorgate/blob/main/LICENSE" rel="noopener"><span lang="en">License</span><span lang="fa">مجوز</span></a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  function get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
+  /* language */
+  function applyLang(l) {
+    root.lang = l;
+    root.dir = l === 'fa' ? 'rtl' : 'ltr';
+    document.title = l === 'fa' ? 'MirrorGate: آینه‌ی هر سایت با PHP و یک فایل env' : 'MirrorGate: mirror any site with PHP and one .env';
+  }
+  var lang = get('mg-lang');
+  if (lang !== 'fa' && lang !== 'en') { lang = 'en'; }
+  if (location.hash === '#fa') { lang = 'fa'; }
+  applyLang(lang);
+  document.getElementById('langBtn').addEventListener('click', function () {
+    lang = root.lang === 'fa' ? 'en' : 'fa';
+    applyLang(lang); set('mg-lang', lang);
+  });
+
+  /* theme: auto -> light -> dark */
+  var modes = ['auto', 'light', 'dark'];
+  var label = document.getElementById('themeLabel');
+  function applyTheme(m) {
+    if (m === 'light' || m === 'dark') { root.setAttribute('data-theme', m); } else { root.removeAttribute('data-theme'); m = 'auto'; }
+    label.textContent = m.charAt(0).toUpperCase() + m.slice(1);
+    return m;
+  }
+  var theme = applyTheme(get('mg-theme'));
+  document.getElementById('themeBtn').addEventListener('click', function () {
+    theme = applyTheme(modes[(modes.indexOf(theme) + 1) % modes.length]);
+    set('mg-theme', theme);
+  });
+
+  /* copy buttons */
+  var btns = document.querySelectorAll('.copy');
+  Array.prototype.forEach.call(btns, function (b) {
+    b.addEventListener('click', function () {
+      var text = b.getAttribute('data-copy') || '';
+      var done = function () { var o = b.textContent; b.textContent = 'Copied'; setTimeout(function () { b.textContent = o; }, 1400); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () {});
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>

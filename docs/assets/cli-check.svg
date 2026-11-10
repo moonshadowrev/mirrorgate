@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 380" role="img" aria-labelledby="t d">
+  <title id="t">mirrorgate check terminal session</title>
+  <desc id="d">Illustrative rendering of a self check run in a terminal.</desc>
+  <defs>
+    <style>
+      text{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px;fill:#cbd5e1}
+      .ok{fill:#2dd4bf}.wn{fill:#fbbf24}.d{fill:#64748b}
+    </style>
+  </defs>
+  <rect width="1000" height="380" rx="18" fill="#0b1220"/>
+  <rect x="30" y="30" width="940" height="320" rx="12" fill="#0f172a" stroke="#243049" stroke-width="1.5"/>
+  <circle cx="52" cy="49" r="5" fill="#475569"/><circle cx="70" cy="49" r="5" fill="#475569"/><circle cx="88" cy="49" r="5" fill="#475569"/>
+  <text x="56" y="100"><tspan class="d">$</tspan> php bin/mirrorgate check --network</text>
+  <text x="56" y="136"><tspan class="ok">[ ok ]</tspan> PHP 8.3 with curl, json, mbstring</text>
+  <text x="56" y="160"><tspan class="ok">[ ok ]</tspan> Environment file is outside the document root</text>
+  <text x="56" y="184"><tspan class="ok">[ ok ]</tspan> Storage directory is writable and not web-served</text>
+  <text x="56" y="208"><tspan class="ok">[ ok ]</tspan> Origin resolves to public addresses only</text>
+  <text x="56" y="232"><tspan class="ok">[ ok ]</tspan> TLS handshake with the origin verified</text>
+  <text x="56" y="256"><tspan class="wn">[warn]</tspan> ext-zlib missing: responses are not recompressed</text>
+  <text x="56" y="280"><tspan class="wn">[warn]</tspan> ext-apcu missing: rate limiting uses the file driver</text>
+  <text x="56" y="324" class="d">Illustrative output, wording simplified.</text>
+</svg>

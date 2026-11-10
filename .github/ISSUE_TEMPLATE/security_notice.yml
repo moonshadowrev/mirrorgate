@@ -1,0 +1,26 @@
+name: Security notice (non-sensitive)
+description: Non-sensitive security hardening suggestions only. Vulnerabilities must be reported privately.
+labels: ["security", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Do not disclose vulnerabilities here
+        If you found an exploitable vulnerability, report it privately through a GitHub security advisory:
+        https://github.com/moonshadowrev/mirrorgate/security/advisories/new
+
+        This form is only for general hardening ideas, documentation gaps about secure deployment, and questions about the security model that do not reveal an exploitable issue.
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Confirmation
+      options:
+        - label: This report does not describe an exploitable vulnerability, and contains no secrets or exploit details.
+          required: true
+  - type: textarea
+    id: topic
+    attributes:
+      label: Topic
+      description: What would you like to discuss or improve?
+    validations:
+      required: true

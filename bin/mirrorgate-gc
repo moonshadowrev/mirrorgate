@@ -1,0 +1,74 @@
+#!/usr/bin/env php
+<?php
+// SPDX-License-Identifier: Apache-2.0
+
+declare(strict_types=1);
+
+if (PHP_SAPI !== 'cli') {
+    http_response_code(404);
+    exit;
+}
+
+/*
+ * Cache garbage collection for cron.
+ *
+ *   php bin/mirrorgate-gc [--budget-ms=N] [--quiet] [--help]
+ *
+ * Removes expired, corrupt and orphaned cache files of THIS instance (the project root that
+ * contains this script and its .env), and evicts the oldest entries when the cache is near its
+ * configured limits. Runs incrementally: each invocation continues where the previous one stopped,
+ * so a short budget is safe to schedule every few minutes.
+ */
+
+use MirrorGate\Bootstrap;
+use MirrorGate\Config\ConfigException;
+
+$root = dirname(__DIR__);
+require $root . '/src/autoload.php';
+
+$budgetMs = 20000;
+$quiet = false;
+foreach (array_slice($argv, 1) as $arg) {
+    if ($arg === '--quiet' || $arg === '-q') {
+        $quiet = true;
+    } elseif ($arg === '--help' || $arg === '-h') {
+        fwrite(STDOUT, "Usage: mirrorgate-gc [--budget-ms=N] [--quiet]\n"
+            . "  --budget-ms=N  time budget in milliseconds (default 20000, range 50..600000)\n"
+            . "  --quiet        print nothing on success\n");
+        exit(0);
+    } elseif (preg_match('/^--budget-ms=(\d{1,7})$/D', $arg, $m) === 1) {
+        $budgetMs = max(50, min(600000, (int) $m[1]));
+    } else {
+        fwrite(STDERR, "mirrorgate-gc: unknown argument. Use --help.\n");
+        exit(2);
+    }
+}
+
+try {
+    $config = Bootstrap::loadConfig($root);
+    $cache = Bootstrap::container($config)->httpCache();
+    if (!$cache->isEnabled()) {
+        if (!$quiet) {
+            fwrite(STDOUT, "Cache is disabled; nothing to do.\n");
+        }
+        exit(0);
+    }
+    $report = $cache->gc($budgetMs);
+} catch (ConfigException $e) {
+    fwrite(STDERR, "mirrorgate-gc: configuration error: " . implode(', ', $e->getErrors()) . "\n");
+    exit(1);
+} catch (Throwable $e) {
+    fwrite(STDERR, "mirrorgate-gc: failed (" . get_class($e) . ").\n");
+    exit(1);
+}
+
+if (!$quiet) {
+    fwrite(STDOUT, sprintf(
+        "scanned=%d deleted=%d freed_bytes=%d seconds=%.3f\n",
+        $report->scanned,
+        $report->deleted,
+        $report->freedBytes,
+        $report->seconds,
+    ));
+}
+exit(0);

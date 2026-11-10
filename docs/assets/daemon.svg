@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 520" role="img" aria-labelledby="t d">
+  <title id="t">MirrorGate daemon</title>
+  <desc id="d">Browsers and clients reach the PHP mirror for HTTP and the long running daemon on a VPS for WebSocket, gRPC, TCP and UDP. The daemon forwards to allowlisted origin targets.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#94a3b8"/></marker>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2dd4bf"/><stop offset="1" stop-color="#6366f1"/></linearGradient>
+    <style>
+      text{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;fill:#e2e8f0}
+      .h{font-size:15px;font-weight:700} .s{font-size:12px;fill:#94a3b8}
+      .m{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11.5px;fill:#cbd5e1}
+      .box{fill:#111a2e;stroke:#243049;stroke-width:1.5} .hl{fill:#0f1f2e;stroke:url(#g);stroke-width:2}
+      .ok{fill:#0f2a24;stroke:#2dd4bf;stroke-width:1.5} .warn{fill:#2a1f10;stroke:#f59e0b;stroke-width:1.5} .bad{fill:#2a1216;stroke:#f87171;stroke-width:1.5}
+      .ln{stroke:#94a3b8;stroke-width:1.6;fill:none} .dash{stroke-dasharray:6 5}
+    </style>
+  </defs>
+  <rect width="1000" height="520" rx="18" fill="#0b1220"/>
+  <text class="h" x="500" y="36" text-anchor="middle">Optional daemon: sockets that php-fpm cannot hold</text>
+  <rect class="box" x="30" y="90" width="170" height="90" rx="10"/>
+  <text class="h" x="115" y="114" text-anchor="middle">Clients</text>
+  <text class="s" x="115" y="134" text-anchor="middle">browser, mobile app,</text>
+  <text class="s" x="115" y="151" text-anchor="middle">game, DNS / QUIC client</text>
+  <rect class="hl" x="260" y="60" width="240" height="90" rx="10"/>
+  <text class="h" x="380" y="84" text-anchor="middle">Shared hosting (HTTP)</text>
+  <text class="s" x="380" y="104" text-anchor="middle">public/index.php</text>
+  <text class="s" x="380" y="121" text-anchor="middle">pages, API, SSE, cache</text>
+  <rect class="hl" x="260" y="230" width="240" height="230" rx="10"/>
+  <text class="h" x="380" y="254" text-anchor="middle">VPS: bin/mirrorgate-daemon</text>
+  <text class="m" x="380" y="274" text-anchor="middle">single PHP CLI process</text>
+  <text class="m" x="380" y="291" text-anchor="middle">stream_select event loop</text>
+  <text class="m" x="380" y="308" text-anchor="middle"></text>
+  <text class="m" x="380" y="325" text-anchor="middle">ws://   WebSocket (RFC 6455)</text>
+  <text class="m" x="380" y="342" text-anchor="middle">grpc:// h2c or TLS passthrough</text>
+  <text class="m" x="380" y="359" text-anchor="middle">tcp://   raw TCP bytes</text>
+  <text class="m" x="380" y="376" text-anchor="middle">udp://   datagram sessions</text>
+  <text class="m" x="380" y="393" text-anchor="middle"></text>
+  <text class="m" x="380" y="410" text-anchor="middle">DAEMON_LISTEN_n=listen->target</text>
+  <rect class="ok" x="740" y="60" width="230" height="90" rx="10"/>
+  <text class="h" x="855" y="84" text-anchor="middle">Origin A: HTTP(S)</text>
+  <text class="m" x="855" y="104" text-anchor="middle">overlord.team:443</text>
+  <rect class="ok" x="740" y="230" width="230" height="230" rx="10"/>
+  <text class="h" x="855" y="254" text-anchor="middle">Origin A: sockets</text>
+  <text class="s" x="855" y="274" text-anchor="middle">wss://overlord.team:443</text>
+  <text class="s" x="855" y="291" text-anchor="middle">tls://overlord.team:443</text>
+  <text class="s" x="855" y="308" text-anchor="middle">udp://overlord.team:53</text>
+  <text class="s" x="855" y="325" text-anchor="middle"></text>
+  <text class="s" x="855" y="342" text-anchor="middle">Target allowlist,</text>
+  <text class="s" x="855" y="359" text-anchor="middle">private ranges blocked</text>
+  <path class="ln" d="M200 120H260" marker-end="url(#a)"/>
+  <path class="ln" d="M500 105H740" marker-end="url(#a)"/>
+  <path class="ln" d="M115 180V345H260" marker-end="url(#a)"/>
+  <path class="ln" d="M500 345H740" marker-end="url(#a)"/>
+  <text class="s" x="630" y="95" text-anchor="middle">cURL</text>
+  <text class="s" x="630" y="335" text-anchor="middle">forwarded</text>
+  <text class="s" x="120" y="370" text-anchor="middle">WebSocket, gRPC,</text>
+  <text class="s" x="120" y="387" text-anchor="middle">TCP, UDP</text>
+  <text class="s" x="500" y="495" text-anchor="middle">Loopback bind by default. Public bind, connection limits, idle timeouts and rate limits are set in .env.</text>
+</svg>

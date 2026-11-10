@@ -1,0 +1,34 @@
+# Secrets and per-instance configuration (never commit)
+/.env
+/.env.*
+!/.env.example
+.env.php
+
+# Runtime data: cache, logs, locks, rate limits, salt, daemon pid
+/var/
+*.log
+
+# Dependencies and tool caches
+/vendor/
+/.phpunit.cache/
+/.phpstan.cache/
+.phpunit.result.cache
+/composer.phar
+
+# Test run artifacts
+/tests/.tmp/
+/tests/Integration/.tmp/
+
+# Build output
+/dist/
+*.zip
+*.tar.gz
+
+# Editors and OS
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db

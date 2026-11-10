@@ -1,0 +1,38 @@
+name: Feature request
+description: Suggest an idea or improvement
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What are you trying to do, and what is blocking you?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe what you would like to see, including any new `.env` options.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: dropdown
+    id: constraints
+    attributes:
+      label: Compatibility
+      description: MirrorGate targets PHP 8.3+, zero required Composer runtime dependencies, and upload-only shared hosting.
+      options:
+        - Works within current constraints
+        - Needs an optional PHP extension
+        - Daemon only (needs a long-running process)
+        - Not sure
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I am willing to open a pull request for this.

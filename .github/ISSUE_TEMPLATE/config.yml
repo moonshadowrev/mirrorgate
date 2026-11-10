@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/moonshadowrev/mirrorgate/security/advisories/new
+    about: Report vulnerabilities privately through a GitHub security advisory. Do not open a public issue.
+  - name: Read the documentation
+    url: https://github.com/moonshadowrev/mirrorgate/tree/main/docs
+    about: Setup, configuration, and deployment guides.

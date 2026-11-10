@@ -1,0 +1,19 @@
+name: Question
+description: Ask a usage or deployment question
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please read the documentation first. Never paste secrets or `.env` contents.
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: PHP version, hosting type, web server, and what you have already tried.

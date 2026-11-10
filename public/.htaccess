@@ -1,0 +1,114 @@
+# MirrorGate: Apache / LiteSpeed rules for the public/ docroot.
+#
+# Layout: the web server docroot must be this public/ directory. The env file, src/, bin/,
+# var/ and templates/ live one level above and are therefore never reachable by URL.
+#
+# Behaviour
+#   - Every request is routed to the front controller (index.php). Existing files are never
+#     served directly, with two exceptions: real non-PHP files under .well-known/ (ACME /
+#     AutoSSL validation, security.txt) and under an explicit static/ directory.
+#   - Any other .php file can never execute (only index.php can).
+#   - Dotfiles (except .well-known/) answer 403, directory listings are off.
+#
+# Requirements: AllowOverride FileInfo Limit Options (or All), mod_rewrite, mod_authz_core
+# (Apache 2.4) or mod_access_compat (2.2). On LiteSpeed these rules are read natively.
+#
+# Encoded slashes: Apache answers 404 for %2F in the path unless the server or virtual host
+# config sets "AllowEncodedSlashes NoDecode" (it cannot be set in .htaccess). If the mirrored
+# site uses URLs with %2F, ask your host to enable it (see examples/apache-vhost.conf).
+#
+# If your host ignores .htaccess (nginx, Apache with AllowOverride None, or a docroot that
+# cannot be changed) do NOT rely on this file: use examples/nginx.conf or
+# examples/apache-vhost.conf, keep the env file and STORAGE_DIR outside the docroot, and
+# prefer the self-protecting .env.php form (see .env.example).
+
+Options -Indexes -MultiViews
+DirectoryIndex index.php
+
+# --- Deny rules (work with Apache 2.4 and 2.2) -------------------------------------------
+
+# Dotfiles: .env, .git*, .htpasswd, .user.ini and so on. Files inside .well-known/ have
+# normal names and are not affected.
+<FilesMatch "^\.">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Backup, editor and data leftovers.
+<FilesMatch "(?i)(~|\.(bak|backup|old|orig|save|swp|swo|tmp|dist|sql|log|ini|env|lock))$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Every PHP-like file except index.php. A stray public/*.php can never execute.
+<FilesMatch "(?i)^(?!index\.php$).+\.(php[0-9]*|phtml|phar|phps|inc|pht)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# --- Front controller --------------------------------------------------------------------
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Hand the Authorization header to PHP (FastCGI and CGI strip it by default).
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Dotfile paths are never forwarded to the origin: answer 403 locally.
+    # /.well-known/ is the only dot segment that is allowed.
+    RewriteRule (^|/)\.(?!well-known(/|$)) - [F,L]
+
+    # The front controller itself.
+    RewriteRule ^index\.php$ - [L]
+
+    # Real, non-PHP files under .well-known/ and static/ are served by the web server.
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^(?:\.well-known|static)/(?!.*\.(?:php[0-9]*|phtml|phar|phps|inc|pht)(?:/|$)).+$ - [L,NC]
+
+    # Everything else goes to MirrorGate. There is deliberately no generic "file exists"
+    # shortcut: a file that happens to be uploaded next to index.php is proxied like any
+    # other path instead of being served or executed.
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# --- PHP settings ------------------------------------------------------------------------
+
+# MirrorGate needs php://input for form and multipart bodies. With PHP's default
+# (enable_post_data_reading=1) such bodies would be consumed and uploads would be proxied
+# empty. The mod_php setting is set here; PHP-FPM / CGI read public/.user.ini instead.
+<IfModule mod_php.c>
+    php_value enable_post_data_reading 0
+</IfModule>
+<IfModule mod_php8.c>
+    php_value enable_post_data_reading 0
+</IfModule>
+
+# --- Streaming ---------------------------------------------------------------------------
+
+# Do not let mod_deflate buffer Server-Sent Events.
+<IfModule mod_setenvif.c>
+    SetEnvIfNoCase Accept "text/event-stream" no-gzip=1 dont-vary=1
+</IfModule>
+
+# Notes for other servers
+#   LiteSpeed : honours this file when AllowOverride is enabled; also disable "Enable
+#               Compression" for the vhost if SSE streams are buffered.
+#   nginx     : .htaccess is ignored. Use examples/nginx.conf (try_files, FastCGI params,
+#               "fastcgi_param PHP_VALUE enable_post_data_reading=0", X-Accel-Buffering).
+#   Apache + PHP-FPM through mod_proxy_fcgi : add "flushpackets=on" for the proxy worker
+#               so streamed chunks are not held back (see examples/apache-vhost.conf).

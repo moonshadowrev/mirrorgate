@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 590" role="img" aria-labelledby="t d">
+  <title id="t">Multiple MirrorGate instances</title>
+  <desc id="d">Each domain or subdomain has its own docroot, its own .env and its own cache directory. Three instances mirror three origins independently on one shared hosting account.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#94a3b8"/></marker>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2dd4bf"/><stop offset="1" stop-color="#6366f1"/></linearGradient>
+    <style>
+      text{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;fill:#e2e8f0}
+      .h{font-size:15px;font-weight:700} .s{font-size:12px;fill:#94a3b8}
+      .m{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11.5px;fill:#cbd5e1}
+      .box{fill:#111a2e;stroke:#243049;stroke-width:1.5} .hl{fill:#0f1f2e;stroke:url(#g);stroke-width:2}
+      .ok{fill:#0f2a24;stroke:#2dd4bf;stroke-width:1.5} .warn{fill:#2a1f10;stroke:#f59e0b;stroke-width:1.5} .bad{fill:#2a1216;stroke:#f87171;stroke-width:1.5}
+      .ln{stroke:#94a3b8;stroke-width:1.6;fill:none} .dash{stroke-dasharray:6 5}
+    </style>
+  </defs>
+  <rect width="1000" height="590" rx="18" fill="#0b1220"/>
+  <text class="h" x="500" y="36" text-anchor="middle">One instance per (sub)domain: separate docroot, .env and cache</text>
+  <rect class="box" x="380" y="60" width="240" height="70" rx="10"/>
+  <text class="h" x="500" y="84" text-anchor="middle">Shared hosting account</text>
+  <text class="s" x="500" y="104" text-anchor="middle">Apache / LiteSpeed, php-fpm</text>
+  <text class="s" x="500" y="121" text-anchor="middle">upload-only, no shell needed</text>
+  <rect class="hl" x="40" y="170" width="280" height="250" rx="14"/>
+  <text class="h" x="180" y="198" text-anchor="middle">Instance 1: overload.ir</text>
+  <text class="m" x="180" y="218" text-anchor="middle">docroot: ~/public_html/</text>
+  <rect class="box" x="60" y="236" width="240" height="50" rx="10"/>
+  <text class="h" x="180" y="260" text-anchor="middle">.env</text>
+  <text class="s" x="180" y="280" text-anchor="middle">ORIGIN_URL, MIRROR_URL, secrets</text>
+  <rect class="box" x="60" y="300" width="240" height="50" rx="10"/>
+  <text class="h" x="180" y="324" text-anchor="middle">src/ + public/index.php</text>
+  <text class="s" x="180" y="344" text-anchor="middle">code copy or shared include path</text>
+  <rect class="box" x="60" y="362" width="240" height="44" rx="10"/>
+  <text class="h" x="180" y="386" text-anchor="middle">STORAGE_DIR: own cache + logs</text>
+  <path class="ln" d="M500 130L180 170" marker-end="url(#a)"/>
+  <rect class="ok" x="70" y="460" width="220" height="60" rx="10"/>
+  <text class="h" x="180" y="484" text-anchor="middle">overlord.team</text>
+  <text class="m" x="180" y="504" text-anchor="middle">origin A</text>
+  <path class="ln" d="M180 420V460" marker-end="url(#a)"/>
+  <rect class="hl" x="360" y="170" width="280" height="250" rx="14"/>
+  <text class="h" x="500" y="198" text-anchor="middle">Instance 2: api.overload.ir</text>
+  <text class="m" x="500" y="218" text-anchor="middle">docroot: ~/api/</text>
+  <rect class="box" x="380" y="236" width="240" height="50" rx="10"/>
+  <text class="h" x="500" y="260" text-anchor="middle">.env</text>
+  <text class="s" x="500" y="280" text-anchor="middle">ORIGIN_URL, MIRROR_URL, secrets</text>
+  <rect class="box" x="380" y="300" width="240" height="50" rx="10"/>
+  <text class="h" x="500" y="324" text-anchor="middle">src/ + public/index.php</text>
+  <text class="s" x="500" y="344" text-anchor="middle">code copy or shared include path</text>
+  <rect class="box" x="380" y="362" width="240" height="44" rx="10"/>
+  <text class="h" x="500" y="386" text-anchor="middle">STORAGE_DIR: own cache + logs</text>
+  <path class="ln" d="M500 130L500 170" marker-end="url(#a)"/>
+  <rect class="ok" x="390" y="460" width="220" height="60" rx="10"/>
+  <text class="h" x="500" y="484" text-anchor="middle">api.overlord.team</text>
+  <text class="m" x="500" y="504" text-anchor="middle">origin A</text>
+  <path class="ln" d="M500 420V460" marker-end="url(#a)"/>
+  <rect class="hl" x="680" y="170" width="280" height="250" rx="14"/>
+  <text class="h" x="820" y="198" text-anchor="middle">Instance 3: blog.overload.ir</text>
+  <text class="m" x="820" y="218" text-anchor="middle">docroot: ~/blog/</text>
+  <rect class="box" x="700" y="236" width="240" height="50" rx="10"/>
+  <text class="h" x="820" y="260" text-anchor="middle">.env</text>
+  <text class="s" x="820" y="280" text-anchor="middle">ORIGIN_URL, MIRROR_URL, secrets</text>
+  <rect class="box" x="700" y="300" width="240" height="50" rx="10"/>
+  <text class="h" x="820" y="324" text-anchor="middle">src/ + public/index.php</text>
+  <text class="s" x="820" y="344" text-anchor="middle">code copy or shared include path</text>
+  <rect class="box" x="700" y="362" width="240" height="44" rx="10"/>
+  <text class="h" x="820" y="386" text-anchor="middle">STORAGE_DIR: own cache + logs</text>
+  <path class="ln" d="M500 130L820 170" marker-end="url(#a)"/>
+  <rect class="ok" x="710" y="460" width="220" height="60" rx="10"/>
+  <text class="h" x="820" y="484" text-anchor="middle">blog.overlord.team</text>
+  <text class="m" x="820" y="504" text-anchor="middle">origin A</text>
+  <path class="ln" d="M820 420V460" marker-end="url(#a)"/>
+  <text class="s" x="500" y="548" text-anchor="middle">No state shared between instances, so a bad config or a purge never crosses domains.</text>
+  <text class="s" x="500" y="570" text-anchor="middle">Give every instance a unique APP_INSTANCE_ID and its own STORAGE_DIR outside the docroot when the host allows it.</text>
+</svg>
